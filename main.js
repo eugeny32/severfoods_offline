@@ -1,6 +1,16 @@
-const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, shell } = require('electron');
-const path   = require('path');
-const db     = require('./src/db');
+// Load .env before any other module reads process.env
+const fs   = require('fs');
+const path = require('path');
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+    fs.readFileSync(envPath, 'utf8').split(/\r?\n/).forEach(line => {
+        const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*)\s*$/);
+        if (m) process.env[m[1]] = m[2];
+    });
+}
+
+const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } = require('electron');
+const db   = require('./src/db');
 const server = require('./src/server');
 const sync   = require('./src/sync');
 

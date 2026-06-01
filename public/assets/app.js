@@ -440,18 +440,21 @@ function stopScanner() {
     if (activeUi) activeUi.style.display = 'none';
 }
 
-// Manual check button: show when user types manually
+// Hide mode badge when user types manually
 document.getElementById('qrUsbInput')?.addEventListener('input', e => {
-    const btn = document.getElementById('manualCheckBtn');
     const badge = document.getElementById('modeBadge');
-    if (btn) btn.style.display = e.target.value.trim() ? '' : 'none';
     if (badge) badge.style.display = e.target.value.trim() ? 'none' : '';
 });
 
 function doManualCheck() {
     const input = document.getElementById('qrUsbInput');
     const val = input?.value.trim();
-    if (val) { handleQrScan(val); input.value = ''; document.getElementById('manualCheckBtn').style.display = 'none'; document.getElementById('modeBadge').style.display = ''; }
+    if (val) {
+        handleQrScan(val);
+        input.value = '';
+        const badge = document.getElementById('modeBadge');
+        if (badge) badge.style.display = '';
+    }
 }
 
 async function handleQrScan(qrData) {
@@ -814,12 +817,17 @@ function showQrModal(empId) {
     document.getElementById('qrModalCode').textContent = emp.qr_code;
 
     const canvas = document.getElementById('qrCanvas');
-    if (typeof QRCode !== 'undefined') {
-        QRCode.toCanvas(canvas, emp.qr_code, { width: 240, margin: 2 }, () => {});
-    } else {
-        canvas.style.display = 'none';
-    }
+    canvas.style.display = '';
     openModal('qrModal');
+
+    function tryRender(attempts) {
+        if (typeof QRCode !== 'undefined') {
+            QRCode.toCanvas(canvas, emp.qr_code, { width: 280, margin: 2 }, () => {});
+        } else if (attempts > 0) {
+            setTimeout(() => tryRender(attempts - 1), 200);
+        }
+    }
+    tryRender(15);
 }
 
 // ── Modal helpers ─────────────────────────────────────────
@@ -884,25 +892,38 @@ async function loadLogs() {
 
 // ── Settings ──────────────────────────────────────────────
 // ── Theme ─────────────────────────────────────────────────
-const THEMES = ['light','dark','auto'];
 function applyTheme(t) {
-    const effective = t === 'auto'
-        ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-        : t;
-    document.documentElement.setAttribute('data-theme', effective);
+    document.documentElement.setAttribute('data-theme', t === 'dark' ? 'dark' : 'light');
     localStorage.setItem('theme', t);
 }
 function initTheme() {
     applyTheme(localStorage.getItem('theme') || 'light');
 }
 initTheme();
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    if ((localStorage.getItem('theme') || 'light') === 'auto') applyTheme('auto');
-});
 
 function setTheme(t) {
     applyTheme(t);
     document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === t));
+}
+
+// ── Zoom ──────────────────────────────────────────────────
+function initZoom() {
+    const z = parseInt(localStorage.getItem('zoom') || '100', 10);
+    document.documentElement.style.zoom = z + '%';
+}
+initZoom();
+
+function setZoom(val) {
+    val = Math.max(70, Math.min(150, val));
+    document.documentElement.style.zoom = val + '%';
+    localStorage.setItem('zoom', String(val));
+    const el = document.getElementById('zoomVal');
+    if (el) el.textContent = val + '%';
+}
+
+function changeZoom(delta) {
+    const cur = parseInt(localStorage.getItem('zoom') || '100', 10);
+    setZoom(cur + delta);
 }
 
 // ── Settings ──────────────────────────────────────────────
@@ -927,12 +948,26 @@ function renderSettings() {
         </div>`;
     }
 
-    // 1. Theme
-    grid.innerHTML += card('Тема интерфейса', 'palette', `
-        <div class="theme-picker">
-            <button class="theme-btn${curTheme==='light'?' active':''}" data-theme="light" onclick="setTheme('light')"><i class="fas fa-sun"></i> Светлая</button>
-            <button class="theme-btn${curTheme==='dark'?' active':''}"  data-theme="dark"  onclick="setTheme('dark')"><i class="fas fa-moon"></i> Тёмная</button>
-            <button class="theme-btn${curTheme==='auto'?' active':''}"  data-theme="auto"  onclick="setTheme('auto')"><i class="fas fa-circle-half-stroke"></i> Авто</button>
+    const curZoom = parseInt(localStorage.getItem('zoom') || '100', 10);
+
+    // 1. Theme + Zoom
+    grid.innerHTML += card('Вид интерфейса', 'palette', `
+        <div style="display:flex;flex-direction:column;gap:14px">
+            <div>
+                <div style="font-size:11px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px">Тема</div>
+                <div class="theme-picker">
+                    <button class="theme-btn${curTheme==='light'?' active':''}" data-theme="light" onclick="setTheme('light')"><i class="fas fa-sun"></i> Светлая</button>
+                    <button class="theme-btn${curTheme==='dark'?' active':''}"  data-theme="dark"  onclick="setTheme('dark')"><i class="fas fa-moon"></i> Тёмная</button>
+                </div>
+            </div>
+            <div>
+                <div style="font-size:11px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px">Масштаб</div>
+                <div class="zoom-control">
+                    <button class="zoom-btn" onclick="changeZoom(-5)">−</button>
+                    <span class="zoom-val" id="zoomVal">${curZoom}%</span>
+                    <button class="zoom-btn" onclick="changeZoom(5)">+</button>
+                </div>
+            </div>
         </div>
     `);
 

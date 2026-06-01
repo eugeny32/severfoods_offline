@@ -2,6 +2,7 @@ const router = require('express').Router();
 const fetch  = require('node-fetch');
 const db     = require('../db');
 
+// Use HTTPS explicitly to avoid HTTP→HTTPS redirect (which converts POST→GET)
 const SERVER_URL = 'https://severfoods.ru/api/offline_sync.php';
 
 function syncToken() { return process.env.OFFLINE_SYNC_TOKEN || ''; }
@@ -26,11 +27,18 @@ router.post('/login', async (req, res) => {
     try {
         const r = await fetch(`${SERVER_URL}?action=auth`, {
             method:  'POST',
-            headers: { 'X-Sync-Token': syncToken(), 'Content-Type': 'application/json' },
+            headers: {
+                'X-Sync-Token': syncToken(),
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
             body:    JSON.stringify({ qr_code, role: role || 'operator', meal_point_id }),
-            timeout: 10000,
+            redirect: 'follow',
+            timeout: 12000,
         });
-        const data = await r.json();
+        const text = await r.text();
+        let data;
+        try { data = JSON.parse(text); } catch(_) { throw new Error('Bad response: ' + text.slice(0,100)); }
         if (!data.ok) return res.status(401).json({ ok: false, error: data.error });
 
         db.setMeta('session', JSON.stringify({ employee: data.employee, expires_at: data.expires_at }));

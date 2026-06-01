@@ -167,12 +167,16 @@ function insertMealLog(log) {
          log.operator_name ?? 'Офлайн', log.scanned_at]);
 }
 
-function getMealLogs(limit = 200, offset = 0, pointId = null) {
-    const where = pointId ? 'AND ml.meal_point_id = ' + parseInt(pointId) : '';
+function getMealLogs(limit = 200, offset = 0, pointId = null, since = null) {
+    let where = '';
+    const params = [];
+    if (pointId) { where += ' AND ml.meal_point_id = ?'; params.push(parseInt(pointId)); }
+    if (since)   { where += ' AND ml.scanned_at >= ?';   params.push(since); }
+    params.push(limit, offset);
     return _all(`SELECT ml.*, e.full_name AS employee_name, e.organization
                  FROM meal_logs ml LEFT JOIN employees e ON e.id = ml.employee_id
                  WHERE 1=1 ${where}
-                 ORDER BY ml.scanned_at DESC LIMIT ? OFFSET ?`, [limit, offset]);
+                 ORDER BY ml.scanned_at DESC LIMIT ? OFFSET ?`, params);
 }
 
 function getUnsyncedLogs() {

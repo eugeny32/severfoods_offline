@@ -120,7 +120,7 @@
             <button class="nav-btn active" data-page="scanner" data-roles="all">
                 <i class="fas fa-qrcode"></i> Сканер
             </button>
-            <button class="nav-btn" data-page="employees" data-roles="admin,super_admin">
+            <button class="nav-btn" data-page="employees" data-roles="all">
                 <i class="fas fa-users"></i> Сотрудники
             </button>
             <button class="nav-btn" data-page="chat" data-roles="operator,admin,super_admin">
@@ -165,20 +165,53 @@
         <section class="page active" id="page-scanner">
             <div class="page-header">
                 <h1>Сканер QR-пропусков</h1>
-                <div class="meal-type-picker">
-                    <button class="mt-btn active" data-type="breakfast">Завтрак</button>
-                    <button class="mt-btn" data-type="lunch">Обед</button>
-                    <button class="mt-btn" data-type="dinner">Ужин</button>
-                    <button class="mt-btn" data-type="night">Ночной</button>
+                <div class="meal-type-auto" id="mealTypeAuto">
+                    <span class="mt-auto-icon" id="mealTypeIcon"></span>
+                    <span class="mt-auto-label" id="mealTypeLabel">Определяется…</span>
                 </div>
             </div>
-            <div class="qr-usb-wrap">
+
+            <!-- QR input — web-style -->
+            <div class="qr-field-wrap">
+                <div class="qr-label-row">
+                    <span class="qr-label-text"><i class="fas fa-qrcode"></i> QR-код</span>
+                    <span class="mode-badge" id="modeBadge"><i class="fas fa-crosshairs"></i> Режим сканирования</span>
+                    <span class="qr-pill" id="qsfLayout" style="display:none">RU→EN</span>
+                    <span class="qr-pill qr-pill-idle" id="qsfIdle" style="display:none">Фокус через <b id="qsfIdleSec">5</b>с</span>
+                </div>
                 <input type="text" id="qrUsbInput" class="qr-input scanner-active"
                        autocomplete="off" autocorrect="off" spellcheck="false"
-                       placeholder="Отсканируйте QR-код USB-сканером или введите вручную">
-                <span class="qr-pill" id="qsfLayout" style="display:none">RU→EN</span>
-                <span class="qr-pill qr-pill-idle" id="qsfIdle" style="display:none">Фокус через <b id="qsfIdleSec">5</b>с</span>
+                       placeholder="Наведите сканер на QR-код…">
+                <button class="btn-manual-check" id="manualCheckBtn" style="display:none" onclick="doManualCheck()">
+                    <i class="fas fa-search"></i> Проверить вручную
+                </button>
             </div>
+
+            <!-- Today stats -->
+            <div class="stats-row" id="scannerStats">
+                <div class="stat-tile">
+                    <div class="stat-icon-row"><i class="fas fa-cloud-sun"></i></div>
+                    <div class="stat-num" id="stat_breakfast">0</div>
+                    <div class="stat-lbl">Завтрак</div>
+                </div>
+                <div class="stat-tile">
+                    <div class="stat-icon-row"><i class="fas fa-sun"></i></div>
+                    <div class="stat-num" id="stat_lunch">0</div>
+                    <div class="stat-lbl">Обед</div>
+                </div>
+                <div class="stat-tile">
+                    <div class="stat-icon-row"><i class="fas fa-moon"></i></div>
+                    <div class="stat-num" id="stat_dinner">0</div>
+                    <div class="stat-lbl">Ужин</div>
+                </div>
+                <div class="stat-tile">
+                    <div class="stat-icon-row"><i class="fas fa-star"></i></div>
+                    <div class="stat-num" id="stat_night">0</div>
+                    <div class="stat-lbl">Ночное</div>
+                </div>
+            </div>
+
+            <!-- Scanner area: camera + scan log -->
             <div class="scanner-area">
                 <div class="scanner-box">
                     <video id="scannerVideo" playsinline></video>
@@ -188,14 +221,16 @@
                             <i class="fas fa-camera" style="font-size:40px;color:rgba(255,255,255,.7)"></i>
                             <span>Включить камеру</span>
                         </div>
-                        <div id="scanActiveUi" style="display:none;width:100%;height:100%;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px">
+                        <div id="scanActiveUi" style="display:none;width:100%;height:100%;flex-direction:column;align-items:center;justify-content:center;gap:12px">
                             <div class="scan-frame"></div>
                             <p class="scan-hint" id="scanHint">Наведите камеру на QR-код</p>
                             <button class="scan-stop-btn" onclick="stopScanner()"><i class="fas fa-stop"></i> Выключить</button>
                         </div>
                     </div>
                 </div>
-                <div class="scan-result">
+
+                <!-- Scan log: last result + history -->
+                <div class="scan-log-panel">
                     <div class="result-card" id="resultCard" style="display:none">
                         <div class="result-icon" id="resultIcon"></div>
                         <div class="result-info">
@@ -205,10 +240,15 @@
                             <div class="result-msg"  id="resultMsg"></div>
                         </div>
                     </div>
-                    <div class="result-idle" id="resultIdle">
-                        <i class="fas fa-qrcode" style="font-size:52px;color:#cbd5e1"></i>
+                    <div class="scan-log-idle" id="resultIdle">
+                        <i class="fas fa-qrcode"></i>
                         <p>Ожидание сканирования</p>
                     </div>
+                    <div class="scan-log-header" id="scanLogHeader" style="display:none">
+                        <span>Пройдено сегодня</span>
+                        <span class="scan-log-count" id="scanLogCount">0</span>
+                    </div>
+                    <div class="scan-log-list" id="scanLogList"></div>
                 </div>
             </div>
         </section>

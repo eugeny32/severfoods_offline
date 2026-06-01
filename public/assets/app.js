@@ -458,6 +458,7 @@ function doManualCheck() {
 }
 
 async function handleQrScan(qrData) {
+    closeScanResultPopup(); // dismiss any previous result immediately
     if (scanCooldown) return;
     scanCooldown = true;
     updateMealTypeAuto(); // re-check type at scan time
@@ -539,21 +540,44 @@ function flashStatus(type) {
     }, 1400);
 }
 
+let _srpTimer = null;
+const SRP_DURATION = 3000; // ms before auto-close
+
+function closeScanResultPopup() {
+    clearTimeout(_srpTimer);
+    const popup = document.getElementById('scanResultPopup');
+    if (popup) popup.classList.remove('open', 'srp-ok', 'srp-dup', 'srp-error');
+}
+
 function showResult(emp, type, message) {
     playBeep(type);
     flashStatus(type);
-    const icons  = { ok:'✅', error:'❌', dup:'⚠️' };
-    const msgCls = { ok:'msg-ok', error:'msg-error', dup:'msg-dup' };
-    document.getElementById('resultIdle').style.display  = 'none';
-    document.getElementById('resultCard').style.display  = 'flex';
-    document.getElementById('resultIcon').textContent    = icons[type] || '?';
-    document.getElementById('resultIcon').className      = `result-icon ${type}`;
-    document.getElementById('resultName').textContent    = emp ? emp.full_name : '—';
-    document.getElementById('resultOrg').textContent     = emp ? (emp.organization || '') : '';
-    document.getElementById('resultPos').textContent     = emp ? (emp.position || '') : '';
-    const msgEl = document.getElementById('resultMsg');
-    msgEl.textContent = message;
-    msgEl.className   = `result-msg ${msgCls[type]}`;
+
+    // Close any open result immediately before showing new one
+    closeScanResultPopup();
+
+    const popup = document.getElementById('scanResultPopup');
+    if (!popup) return;
+
+    const icons = { ok:'✅', error:'❌', dup:'⚠️' };
+    popup.classList.add('open', `srp-${type}`);
+    document.getElementById('srpIcon').textContent = icons[type] || '?';
+    document.getElementById('srpName').textContent = emp ? emp.full_name : '—';
+    document.getElementById('srpOrg').textContent  = emp ? (emp.organization || emp.department || '') : '';
+    document.getElementById('srpMsg').textContent  = message;
+
+    // Animate progress bar shrink
+    const bar = document.getElementById('srpBar');
+    if (bar) {
+        bar.style.transition = 'none';
+        bar.style.transform  = 'scaleX(1)';
+        // Force reflow then start animation
+        bar.getBoundingClientRect();
+        bar.style.transition = `transform ${SRP_DURATION}ms linear`;
+        bar.style.transform  = 'scaleX(0)';
+    }
+
+    _srpTimer = setTimeout(closeScanResultPopup, SRP_DURATION);
 }
 
 // ── Scan log (today's history in right panel) ───────────────
@@ -568,12 +592,10 @@ function addToScanLog(emp, type) {
 }
 
 function renderScanLog() {
-    const header = document.getElementById('scanLogHeader');
-    const list   = document.getElementById('scanLogList');
-    const count  = document.getElementById('scanLogCount');
+    const list  = document.getElementById('scanLogList');
+    const count = document.getElementById('scanLogCount');
     if (!list) return;
     const ok = scanLogEntries.filter(e => e.type === 'ok').length;
-    header.style.display = scanLogEntries.length ? '' : 'none';
     if (count) count.textContent = ok;
     list.innerHTML = scanLogEntries.map(e => `
         <div class="scan-log-item">

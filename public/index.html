@@ -213,22 +213,8 @@
 
             <!-- Scanner area: scan log only (camera is in modal) -->
             <div class="scanner-area-log">
-                <!-- Scan log -->
                 <div class="scan-log-panel">
-                    <div class="result-card" id="resultCard" style="display:none">
-                        <div class="result-icon" id="resultIcon"></div>
-                        <div class="result-info">
-                            <div class="result-name" id="resultName"></div>
-                            <div class="result-org"  id="resultOrg"></div>
-                            <div class="result-pos"  id="resultPos"></div>
-                            <div class="result-msg"  id="resultMsg"></div>
-                        </div>
-                    </div>
-                    <div class="scan-log-idle" id="resultIdle">
-                        <i class="fas fa-qrcode"></i>
-                        <p>Ожидание сканирования</p>
-                    </div>
-                    <div class="scan-log-header" id="scanLogHeader" style="display:none">
+                    <div class="scan-log-header" id="scanLogHeader">
                         <span>Пройдено сегодня</span>
                         <span class="scan-log-count" id="scanLogCount">0</span>
                     </div>
@@ -364,6 +350,17 @@
                 <div id="manualResult" style="margin-top:12px"></div>
             </div>
         </div>
+    </div>
+
+    <!-- ── Всплывающий результат сканирования ── -->
+    <div class="scan-result-popup" id="scanResultPopup">
+        <div class="srp-icon" id="srpIcon"></div>
+        <div class="srp-info">
+            <div class="srp-name" id="srpName"></div>
+            <div class="srp-org"  id="srpOrg"></div>
+            <div class="srp-msg"  id="srpMsg"></div>
+        </div>
+        <div class="srp-progress"><div class="srp-progress-bar" id="srpBar"></div></div>
     </div>
 
     <!-- ── Модальное окно: QR-код сотрудника ── -->

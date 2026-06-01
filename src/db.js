@@ -1,34 +1,55 @@
-const Database = require('better-sqlite3');
-const path     = require('path');
-const { app }  = require('electron');
+const path = require('path');
+const fs   = require('fs');
 
-let db;
+// sql.js — pure WebAssembly SQLite, no native compilation needed
+const initSqlJs = require('sql.js');
 
-function getDb() {
-    if (db) return db;
+let db     = null;
+let dbPath = null;
 
-    const dbPath = path.join(app.getPath('userData'), 'severfoods.db');
-    db = new Database(dbPath);
-    db.pragma('journal_mode = WAL');
-    db.pragma('foreign_keys = ON');
+async function init() {
+    const { app } = require('electron');
+    dbPath = path.join(app.getPath('userData'), 'severfoods.db');
 
-    db.exec(`
+    const SQL = await initSqlJs();
+
+    if (fs.existsSync(dbPath)) {
+        const buf = fs.readFileSync(dbPath);
+        db = new SQL.Database(buf);
+    } else {
+        db = new SQL.Database();
+    }
+
+    db.run(`PRAGMA foreign_keys = ON`);
+    _createSchema();
+    _save();
+    return db;
+}
+
+function _save() {
+    if (!db || !dbPath) return;
+    const data = db.export();
+    fs.writeFileSync(dbPath, Buffer.from(data));
+}
+
+function _createSchema() {
+    db.run(`
         CREATE TABLE IF NOT EXISTS employees (
-            id               INTEGER PRIMARY KEY,
-            full_name        TEXT    NOT NULL,
-            birth_date       TEXT,
-            organization     TEXT,
-            department       TEXT,
-            position         TEXT,
-            vjg_type         TEXT,
-            price            REAL    DEFAULT 0,
-            qr_code          TEXT,
-            qr_expires_at    TEXT,
-            qr_status        TEXT,
-            is_active        INTEGER DEFAULT 1,
-            role             TEXT,
+            id                INTEGER PRIMARY KEY,
+            full_name         TEXT    NOT NULL,
+            birth_date        TEXT,
+            organization      TEXT,
+            department        TEXT,
+            position          TEXT,
+            vjg_type          TEXT,
+            price             REAL    DEFAULT 0,
+            qr_code           TEXT,
+            qr_expires_at     TEXT,
+            qr_status         TEXT,
+            is_active         INTEGER DEFAULT 1,
+            role              TEXT,
             assigned_point_id INTEGER,
-            updated_ts       INTEGER DEFAULT 0
+            updated_ts        INTEGER DEFAULT 0
         );
 
         CREATE TABLE IF NOT EXISTS meal_points (
@@ -67,160 +88,156 @@ function getDb() {
             key   TEXT PRIMARY KEY,
             value TEXT
         );
-
-        CREATE INDEX IF NOT EXISTS idx_meal_logs_unsynced
-            ON meal_logs(synced) WHERE synced = 0;
-
-        CREATE INDEX IF NOT EXISTS idx_employees_qr
-            ON employees(qr_code) WHERE qr_code IS NOT NULL;
     `);
-
-    return db;
 }
 
-// ── employees ────────────────────────────────────────────
+// ── helpers ──────────────────────────────────────────────
+
+function _all(sql, params = []) {
+    const stmt = db.prepare(sql);
+    stmt.bind(params);
+    const rows = [];
+    while (stmt.step()) rows.push(stmt.getAsObject());
+    stmt.free();
+    return rows;
+}
+
+function _get(sql, params = []) {
+    const rows = _all(sql, params);
+    return rows[0] || null;
+}
+
+function _run(sql, params = []) {
+    db.run(sql, params);
+    _save();
+}
+
+// ── employees ─────────────────────────────────────────────
 
 function upsertEmployee(e) {
-    const db = getDb();
-    db.prepare(`
+    _run(`
         INSERT INTO employees
             (id, full_name, birth_date, organization, department, position,
              vjg_type, price, qr_code, qr_expires_at, qr_status,
              is_active, role, assigned_point_id, updated_ts)
-        VALUES
-            (@id, @full_name, @birth_date, @organization, @department, @position,
-             @vjg_type, @price, @qr_code, @qr_expires_at, @qr_status,
-             @is_active, @role, @assigned_point_id, @updated_ts)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         ON CONFLICT(id) DO UPDATE SET
-            full_name         = excluded.full_name,
-            birth_date        = excluded.birth_date,
-            organization      = excluded.organization,
-            department        = excluded.department,
-            position          = excluded.position,
-            vjg_type          = excluded.vjg_type,
-            price             = excluded.price,
-            qr_code           = excluded.qr_code,
-            qr_expires_at     = excluded.qr_expires_at,
-            qr_status         = excluded.qr_status,
-            is_active         = excluded.is_active,
-            role              = excluded.role,
-            assigned_point_id = excluded.assigned_point_id,
-            updated_ts        = excluded.updated_ts
-    `).run(e);
+            full_name=excluded.full_name, birth_date=excluded.birth_date,
+            organization=excluded.organization, department=excluded.department,
+            position=excluded.position, vjg_type=excluded.vjg_type,
+            price=excluded.price, qr_code=excluded.qr_code,
+            qr_expires_at=excluded.qr_expires_at, qr_status=excluded.qr_status,
+            is_active=excluded.is_active, role=excluded.role,
+            assigned_point_id=excluded.assigned_point_id, updated_ts=excluded.updated_ts
+    `, [
+        e.id, e.full_name, e.birth_date ?? null, e.organization ?? null,
+        e.department ?? null, e.position ?? null, e.vjg_type ?? null,
+        e.price ?? 0, e.qr_code ?? null, e.qr_expires_at ?? null,
+        e.qr_status ?? null, e.is_active ?? 1, e.role ?? null,
+        e.assigned_point_id ?? null, e.updated_ts ?? 0,
+    ]);
 }
 
 function getAllEmployees() {
-    return getDb().prepare(
-        'SELECT * FROM employees WHERE is_active = 1 ORDER BY full_name'
-    ).all();
+    return _all('SELECT * FROM employees WHERE is_active = 1 ORDER BY full_name');
 }
 
 function getEmployeeByQr(qrCode) {
-    return getDb().prepare(
-        'SELECT * FROM employees WHERE qr_code = ? AND is_active = 1 LIMIT 1'
-    ).get(qrCode) || null;
+    return _get('SELECT * FROM employees WHERE qr_code = ? AND is_active = 1 LIMIT 1', [qrCode]);
 }
 
-// ── meal_points ──────────────────────────────────────────
+// ── meal_points ───────────────────────────────────────────
 
 function upsertMealPoint(p, schedules) {
-    const db = getDb();
-    db.prepare(`
+    _run(`
         INSERT INTO meal_points (id, point_name, point_code, city, address, is_active)
-        VALUES (@id, @point_name, @point_code, @city, @address, @is_active)
+        VALUES (?,?,?,?,?,?)
         ON CONFLICT(id) DO UPDATE SET
-            point_name = excluded.point_name,
-            point_code = excluded.point_code,
-            city       = excluded.city,
-            address    = excluded.address,
-            is_active  = excluded.is_active
-    `).run(p);
+            point_name=excluded.point_name, point_code=excluded.point_code,
+            city=excluded.city, address=excluded.address, is_active=excluded.is_active
+    `, [p.id, p.point_name, p.point_code, p.city, p.address, p.is_active]);
 
-    db.prepare('DELETE FROM meal_point_schedules WHERE meal_point_id = ?').run(p.id);
-    const ins = db.prepare(`
-        INSERT INTO meal_point_schedules (meal_point_id, meal_type, start_time, end_time, days_of_week)
-        VALUES (?, ?, ?, ?, ?)
-    `);
+    db.run('DELETE FROM meal_point_schedules WHERE meal_point_id = ?', [p.id]);
     for (const s of (schedules || [])) {
-        ins.run(p.id, s.meal_type, s.start_time, s.end_time, s.days_of_week);
+        db.run(
+            'INSERT INTO meal_point_schedules (meal_point_id, meal_type, start_time, end_time, days_of_week) VALUES (?,?,?,?,?)',
+            [p.id, s.meal_type, s.start_time, s.end_time, s.days_of_week]
+        );
     }
+    _save();
 }
 
 function getMealPoints() {
-    const db   = getDb();
-    const pts  = db.prepare('SELECT * FROM meal_points WHERE is_active = 1 ORDER BY point_name').all();
-    const sch  = db.prepare('SELECT * FROM meal_point_schedules WHERE meal_point_id = ?');
-    return pts.map(p => ({ ...p, schedules: sch.all(p.id) }));
+    const pts = _all('SELECT * FROM meal_points WHERE is_active = 1 ORDER BY point_name');
+    return pts.map(p => ({
+        ...p,
+        schedules: _all('SELECT * FROM meal_point_schedules WHERE meal_point_id = ?', [p.id]),
+    }));
 }
 
 // ── meal_logs ─────────────────────────────────────────────
 
 function insertMealLog(log) {
-    return getDb().prepare(`
+    _run(`
         INSERT INTO meal_logs
             (offline_id, employee_id, meal_type, access_granted,
              meal_point_id, meal_point_name, operator_name, scanned_at, synced)
-        VALUES
-            (@offline_id, @employee_id, @meal_type, 1,
-             @meal_point_id, @meal_point_name, @operator_name, @scanned_at, 0)
-    `).run(log);
+        VALUES (?,?,?,1,?,?,?,?,0)
+    `, [
+        log.offline_id, log.employee_id, log.meal_type,
+        log.meal_point_id ?? null, log.meal_point_name ?? 'Офлайн',
+        log.operator_name ?? 'Офлайн', log.scanned_at,
+    ]);
 }
 
 function getMealLogs(limit = 200, offset = 0) {
-    return getDb().prepare(`
+    return _all(`
         SELECT ml.*, e.full_name AS employee_name, e.organization
         FROM meal_logs ml
         LEFT JOIN employees e ON e.id = ml.employee_id
         ORDER BY ml.scanned_at DESC
         LIMIT ? OFFSET ?
-    `).all(limit, offset);
+    `, [limit, offset]);
 }
 
 function getUnsyncedLogs() {
-    return getDb().prepare(
-        'SELECT * FROM meal_logs WHERE synced = 0 ORDER BY scanned_at ASC'
-    ).all();
+    return _all('SELECT * FROM meal_logs WHERE synced = 0 ORDER BY scanned_at ASC');
 }
 
 function markLogsSynced(results) {
-    const db  = getDb();
-    const upd = db.prepare(
-        'UPDATE meal_logs SET synced = 1, server_id = ? WHERE offline_id = ?'
-    );
-    const tx = db.transaction((rows) => {
-        for (const r of rows) {
-            if (r.status === 'ok' || r.status === 'duplicate') {
-                upd.run(r.server_id || null, r.offline_id);
-            }
+    for (const r of results) {
+        if (r.status === 'ok' || r.status === 'duplicate') {
+            db.run('UPDATE meal_logs SET synced = 1, server_id = ? WHERE offline_id = ?',
+                [r.server_id || null, r.offline_id]);
         }
-    });
-    tx(results);
+    }
+    _save();
 }
 
 function hasTodayLog(employeeId, mealType) {
     const today = new Date().toISOString().slice(0, 10);
-    return !!getDb().prepare(`
-        SELECT 1 FROM meal_logs
-        WHERE employee_id = ? AND meal_type = ? AND DATE(scanned_at) = ? AND access_granted = 1
-        LIMIT 1
-    `).get(employeeId, mealType, today);
+    return !!_get(
+        `SELECT 1 FROM meal_logs
+         WHERE employee_id = ? AND meal_type = ? AND DATE(scanned_at) = ? AND access_granted = 1
+         LIMIT 1`,
+        [employeeId, mealType, today]
+    );
 }
 
-// ── sync_meta ────────────────────────────────────────────
+// ── sync_meta ─────────────────────────────────────────────
 
 function getMeta(key) {
-    const row = getDb().prepare('SELECT value FROM sync_meta WHERE key = ?').get(key);
+    const row = _get('SELECT value FROM sync_meta WHERE key = ?', [key]);
     return row ? row.value : null;
 }
 
 function setMeta(key, value) {
-    getDb().prepare(
-        'INSERT INTO sync_meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value'
-    ).run(key, String(value));
+    _run('INSERT INTO sync_meta (key, value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',
+        [key, String(value)]);
 }
 
 module.exports = {
-    getDb,
+    init,
     upsertEmployee, getAllEmployees, getEmployeeByQr,
     upsertMealPoint, getMealPoints,
     insertMealLog, getMealLogs, getUnsyncedLogs, markLogsSynced, hasTodayLog,

@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, shell } = require('electron');
 const path   = require('path');
+const db     = require('./src/db');
 const server = require('./src/server');
 const sync   = require('./src/sync');
 
@@ -53,6 +54,7 @@ function createTray() {
 }
 
 app.whenReady().then(async () => {
+    await db.init();          // init SQLite (sql.js, async)
     await server.start(PORT);
     sync.init();
     createWindow();

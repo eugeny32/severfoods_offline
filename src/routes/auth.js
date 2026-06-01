@@ -3,7 +3,7 @@ const fetch  = require('node-fetch');
 const db     = require('../db');
 
 // Use HTTPS explicitly to avoid HTTP→HTTPS redirect (which converts POST→GET)
-const SERVER_URL = 'https://severfoods.ru/api/offline_sync.php';
+const SERVER_URL = 'https://www.severfoods.ru/api/offline_sync.php';
 
 function syncToken() { return process.env.OFFLINE_SYNC_TOKEN || ''; }
 

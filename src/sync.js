@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 const db    = require('./db');
 
-const BASE_URL    = 'https://severfoods.ru/api/offline_sync.php';
+const BASE_URL    = 'https://www.severfoods.ru/api/offline_sync.php';
 const SYNC_TOKEN  = process.env.OFFLINE_SYNC_TOKEN || '';
 const SYNC_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 

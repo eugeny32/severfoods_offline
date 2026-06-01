@@ -28,7 +28,7 @@ function createWindow() {
         height: 720,
         minWidth:  900,
         minHeight: 600,
-        icon: path.join(__dirname, 'public/assets/icon.ico'),
+        icon: path.join(__dirname, 'public/assets/img/favicon.ico'),
         title: 'SeverFoods Offline',
         webPreferences: {
             nodeIntegration: false,

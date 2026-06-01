@@ -44,15 +44,7 @@ body {
 .login-wrap { position:relative; z-index:1; width:100%; max-width:460px; }
 
 .brand { text-align:center; margin-bottom:28px; }
-.brand-logo {
-    width:72px; height:72px; background:var(--blue-800);
-    border:2px solid rgba(255,255,255,.15); border-radius:20px;
-    display:inline-flex; align-items:center; justify-content:center;
-    font-size:30px; color:#fff;
-    box-shadow:0 8px 24px rgba(0,0,0,.3),0 0 0 8px rgba(255,255,255,.03);
-    margin-bottom:14px;
-}
-.brand h1 { font-size:26px; font-weight:800; color:#fff; letter-spacing:-.5px; text-shadow:0 2px 12px rgba(0,0,0,.3); }
+.brand-logo-img { height:48px; width:auto; max-width:220px; object-fit:contain; filter:brightness(0) invert(1); margin-bottom:8px; display:block; margin-left:auto; margin-right:auto; }
 .brand p  { font-size:13px; color:rgba(255,255,255,.5); margin-top:4px; }
 
 .role-tabs {
@@ -165,10 +157,9 @@ body {
     display:flex; flex-direction:column; padding:15px 11px 13px;
     gap:5px; overflow:hidden;
 }
-.logo { display:flex; align-items:center; gap:9px; padding:0 3px 13px; border-bottom:1px solid rgba(255,255,255,.13); margin-bottom:5px; }
-.logo-icon { width:32px; height:32px; border-radius:8px; background:rgba(255,255,255,.15); color:#fff; font-size:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.logo-brand { color:#fff; font-size:14px; font-weight:700; }
-.logo-sub   { color:rgba(255,255,255,.45); font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:130px; }
+.logo { display:flex; flex-direction:column; gap:4px; padding:0 3px 13px; border-bottom:1px solid rgba(255,255,255,.13); margin-bottom:5px; }
+.sidebar-logo-img { height:30px; width:auto; max-width:140px; object-fit:contain; filter:brightness(0) invert(1); }
+.logo-sub { color:rgba(255,255,255,.45); font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:150px; }
 
 .nav { display:flex; flex-direction:column; gap:2px; flex:1; }
 .nav-btn {

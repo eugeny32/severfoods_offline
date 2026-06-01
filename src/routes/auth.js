@@ -1,69 +1,67 @@
 const router = require('express').Router();
 const fetch  = require('node-fetch');
-const crypto = require('crypto');
 const db     = require('../db');
 
 const SERVER_URL = 'https://severfoods.ru/api/offline_sync.php';
 
-function hashPw(password, salt) {
-    return crypto.pbkdf2Sync(password, salt, 10000, 32, 'sha256').toString('hex');
-}
+function syncToken() { return process.env.OFFLINE_SYNC_TOKEN || ''; }
 
-// GET /api/auth/me — restore session from cache
+// GET /api/auth/me
 router.get('/me', (req, res) => {
     const raw = db.getMeta('session');
     if (!raw) return res.status(401).json({ ok: false });
     try {
         const sess = JSON.parse(raw);
-        if (new Date(sess.expires_at) > new Date()) {
-            return res.json({ ok: true, employee: sess.employee });
-        }
+        if (new Date(sess.expires_at) > new Date()) return res.json({ ok: true, employee: sess.employee });
     } catch (_) {}
     res.status(401).json({ ok: false });
 });
 
-// POST /api/auth/login
+// POST /api/auth/login  — QR-based, same as web version
 router.post('/login', async (req, res) => {
-    const { login, password } = req.body || {};
-    if (!login || !password) {
-        return res.status(400).json({ ok: false, error: 'Введите логин и пароль' });
-    }
+    const { qr_code, role, meal_point_id } = req.body || {};
+    if (!qr_code) return res.status(400).json({ ok: false, error: 'Отсканируйте QR-код' });
 
     // Try server auth
     try {
         const r = await fetch(`${SERVER_URL}?action=auth`, {
             method:  'POST',
-            headers: {
-                'X-Sync-Token': process.env.OFFLINE_SYNC_TOKEN || '',
-                'Content-Type': 'application/json',
-            },
-            body:    JSON.stringify({ login, password }),
+            headers: { 'X-Sync-Token': syncToken(), 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ qr_code, role: role || 'operator', meal_point_id }),
             timeout: 10000,
         });
         const data = await r.json();
         if (!data.ok) return res.status(401).json({ ok: false, error: data.error });
 
-        // Cache session + local pw hash for offline reauth
-        const session = { employee: data.employee, session_token: data.session_token, expires_at: data.expires_at };
-        db.setMeta('session', JSON.stringify(session));
-        db.setMeta('pw_hash_' + login, hashPw(password, login));
-
+        db.setMeta('session', JSON.stringify({ employee: data.employee, expires_at: data.expires_at }));
         return res.json({ ok: true, employee: data.employee });
+
     } catch (_) {
-        // Offline fallback: verify cached password hash
-        const raw = db.getMeta('session');
-        if (raw) {
-            try {
-                const sess = JSON.parse(raw);
-                if (sess.employee?.login === login && new Date(sess.expires_at) > new Date()) {
-                    const storedHash = db.getMeta('pw_hash_' + login);
-                    if (storedHash && storedHash === hashPw(password, login)) {
-                        return res.json({ ok: true, employee: sess.employee, offline: true });
-                    }
-                }
-            } catch (_2) {}
+        // Offline fallback: look up QR in local employees table
+        const emp = db.getEmployeeByQr(qr_code);
+        if (!emp) return res.status(401).json({ ok: false, error: 'QR-код не найден. Подключитесь к серверу для первой синхронизации.' });
+
+        const adminRoles    = ['admin', 'super_admin'];
+        const operatorRoles = ['operator', 'admin', 'super_admin'];
+
+        if (role === 'admin' && !adminRoles.includes(emp.role)) {
+            return res.status(401).json({ ok: false, error: 'Недостаточно прав для входа как администратор' });
         }
-        return res.status(401).json({ ok: false, error: 'Нет связи с сервером. Войдите онлайн хотя бы один раз.' });
+        if (role === 'operator' && !operatorRoles.includes(emp.role)) {
+            return res.status(401).json({ ok: false, error: 'Недостаточно прав для входа как оператор' });
+        }
+
+        // Attach selected point from local DB if provided
+        if (meal_point_id) {
+            emp.selected_point_id = parseInt(meal_point_id);
+            const pts = db.getMealPoints();
+            const pt  = pts.find(p => p.id === emp.selected_point_id);
+            emp.selected_point_name = pt ? pt.point_name : null;
+        }
+
+        const expires_at = new Date(Date.now() + 30 * 86400_000).toISOString();
+        db.setMeta('session', JSON.stringify({ employee: emp, expires_at }));
+        return res.json({ ok: true, employee: emp, offline: true });
     }
 });
 

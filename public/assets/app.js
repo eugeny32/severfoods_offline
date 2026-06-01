@@ -883,79 +883,248 @@ async function loadLogs() {
 }
 
 // ── Settings ──────────────────────────────────────────────
-function renderSettings() {
-    const role = currentUser?.role;
-    let html = '';
+// ── Theme ─────────────────────────────────────────────────
+const THEMES = ['light','dark','auto'];
+function applyTheme(t) {
+    const effective = t === 'auto'
+        ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        : t;
+    document.documentElement.setAttribute('data-theme', effective);
+    localStorage.setItem('theme', t);
+}
+function initTheme() {
+    applyTheme(localStorage.getItem('theme') || 'light');
+}
+initTheme();
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if ((localStorage.getItem('theme') || 'light') === 'auto') applyTheme('auto');
+});
 
-    html += `<div class="settings-card">
-        <h3><i class="fas fa-sync-alt"></i> Синхронизация</h3>
+function setTheme(t) {
+    applyTheme(t);
+    document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === t));
+}
+
+// ── Settings ──────────────────────────────────────────────
+function renderSettings() {
+    const role    = currentUser?.role;
+    const isAdmin = ['admin','super_admin'].includes(role);
+    const isSA    = role === 'super_admin';
+    const curTheme = localStorage.getItem('theme') || 'light';
+
+    const wrap = document.getElementById('settingsContent');
+    wrap.innerHTML = '';
+
+    // ── Grid wrapper ──
+    const grid = document.createElement('div');
+    grid.className = 'settings-grid';
+    wrap.appendChild(grid);
+
+    function card(title, icon, content, wide = false) {
+        return `<div class="settings-card${wide?' wide':''}">
+            <h3><i class="fas fa-${icon}"></i> ${title}</h3>
+            ${content}
+        </div>`;
+    }
+
+    // 1. Theme
+    grid.innerHTML += card('Тема интерфейса', 'palette', `
+        <div class="theme-picker">
+            <button class="theme-btn${curTheme==='light'?' active':''}" data-theme="light" onclick="setTheme('light')"><i class="fas fa-sun"></i> Светлая</button>
+            <button class="theme-btn${curTheme==='dark'?' active':''}"  data-theme="dark"  onclick="setTheme('dark')"><i class="fas fa-moon"></i> Тёмная</button>
+            <button class="theme-btn${curTheme==='auto'?' active':''}"  data-theme="auto"  onclick="setTheme('auto')"><i class="fas fa-circle-half-stroke"></i> Авто</button>
+        </div>
+    `);
+
+    // 2. Sync status
+    grid.innerHTML += card('Синхронизация', 'sync-alt', `
         <div class="setting-row"><label>Статус сервера</label><span id="setStatus">—</span></div>
         <div class="setting-row"><label>Последняя синхронизация</label><span id="setSync">—</span></div>
         <div class="setting-row"><label>Сотрудников в базе</label><span id="setEmp">—</span></div>
         <button class="btn-primary" onclick="syncNow()"><i class="fas fa-sync-alt"></i> Синхронизировать</button>
-    </div>`;
+    `);
 
-    if (['operator','admin','super_admin'].includes(role)) {
-        const ptName = currentUser?.selected_point_name || '—';
-        html += `<div class="settings-card">
-            <h3><i class="fas fa-map-marker-alt"></i> Точка питания</h3>
-            <div class="setting-row"><label>Текущая точка</label><span>${esc(ptName)}</span></div>
-            <div id="setPtSchedules"></div>
-        </div>`;
+    // 3. Meal point info (all roles)
+    const ptName = currentUser?.selected_point_name || currentUser?.assigned_point_name || '—';
+    grid.innerHTML += card('Точка питания', 'map-marker-alt', `
+        <div class="setting-row"><label>Текущая точка</label><span>${esc(ptName)}</span></div>
+        <div id="setPtSchedules"></div>
+    `);
+
+    // 4. DB info (admin+)
+    if (isAdmin) {
+        grid.innerHTML += card('База данных', 'database', `
+            <div class="setting-row"><label>Файл БД</label><span class="setting-mono" id="setDbPath">—</span></div>
+            <div class="setting-row"><label>Сервер</label><span class="setting-mono" id="setServerUrl">—</span></div>
+            <div class="setting-row"><label>Файл .env</label><span class="setting-mono" id="setEnvPath">—</span></div>
+        `);
     }
 
-    if (['admin','super_admin'].includes(role)) {
-        html += `<div class="settings-card">
-            <h3><i class="fas fa-database"></i> База данных</h3>
-            <div class="setting-row"><label>Файл БД</label><span class="setting-mono">%AppData%\\severfoods-offline\\severfoods.db</span></div>
-            <div class="setting-row"><label>Сервер</label><span class="setting-mono">https://severfoods.ru</span></div>
-        </div>`;
+    // 5. Super admin: edit sync URL + token
+    if (isSA) {
+        grid.innerHTML += card('Параметры синхронизации', 'key', `
+            <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:5px">
+                <label>URL сервера синхронизации</label>
+                <input id="cfgSyncUrl" class="setting-input mono" type="text" placeholder="https://www.severfoods.ru/api/offline_sync.php">
+            </div>
+            <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:5px">
+                <label>Токен синхронизации (OFFLINE_SYNC_TOKEN)</label>
+                <input id="cfgSyncToken" class="setting-input mono" type="text" placeholder="Токен из .env на сервере">
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+                <button class="btn-primary" onclick="saveSyncConfig()"><i class="fas fa-save"></i> Сохранить</button>
+                <span class="settings-save-msg" id="cfgSaveMsg">✅ Сохранено</span>
+            </div>
+            <p class="setting-note">Изменения применятся после перезапуска приложения.</p>
+        `);
+
+        // 6. Super admin: App info
+        grid.innerHTML += card('Система', 'server', `
+            <div class="setting-row"><label>Версия приложения</label><span id="setVersion">—</span></div>
+            <div class="setting-row"><label>Платформа</label><span>${navigator.platform || '—'}</span></div>
+            <div class="setting-row"><label>Пользователь</label><span>${esc(currentUser?.full_name || '—')}</span></div>
+            <div class="setting-row"><label>Роль</label><span>${esc(ROLE_LABELS[role] || '—')}</span></div>
+        `);
     }
 
-    if (role === 'super_admin') {
-        html += `<div class="settings-card">
-            <h3><i class="fas fa-key"></i> Токен синхронизации</h3>
-            <p class="setting-note">
-                Токен хранится в файле <code>.env</code> рядом с приложением.<br>
-                Должен совпадать с <code>OFFLINE_SYNC_TOKEN</code> на сервере.
-            </p>
-        </div>`;
+    // 7. Schedule editor (admin = own point, super_admin = all points)
+    if (isAdmin) {
+        grid.innerHTML += card(
+            isSA ? 'Расписание питания — все точки' : 'Расписание питания',
+            'clock',
+            `<div id="scheduleEditor"><i class="fas fa-spinner fa-spin"></i> Загрузка…</div>`,
+            true
+        );
     }
 
-    html += `<div class="settings-card">
-        <h3><i class="fas fa-info-circle"></i> О программе</h3>
-        <div class="setting-row"><label>Версия</label><span>1.0.0</span></div>
+    // 8. About + logout
+    grid.innerHTML += card('О программе', 'info-circle', `
         <div class="setting-row"><label>Пользователь</label><span>${esc(currentUser?.full_name || '—')}</span></div>
         <div class="setting-row"><label>Роль</label><span>${esc(ROLE_LABELS[role] || 'Сотрудник')}</span></div>
         <button class="btn-logout-settings" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Выйти из аккаунта</button>
-    </div>`;
+    `);
 
-    document.getElementById('settingsContent').innerHTML = html;
-
+    // ── Async data loading ──
     fetch('/api/sync/status').then(r => r.json()).then(d => {
         const s = d.status || {};
-        const statusEl = document.getElementById('setStatus');
-        if (statusEl) statusEl.textContent = s.online ? '🟢 Онлайн' : '⚫ Офлайн';
-        const syncEl = document.getElementById('setSync');
-        if (syncEl) syncEl.textContent = s.lastSync ? new Date(s.lastSync).toLocaleString('ru-RU') : 'нет';
-        const empEl = document.getElementById('setEmp');
-        if (empEl) empEl.textContent = s.employees || allEmployees.length || '—';
-    });
+        const el = id => document.getElementById(id);
+        if (el('setStatus')) el('setStatus').textContent = s.online ? '🟢 Онлайн' : '⚫ Офлайн';
+        if (el('setSync'))   el('setSync').textContent   = s.lastSync ? new Date(s.lastSync).toLocaleString('ru-RU') : 'нет';
+        if (el('setEmp'))    el('setEmp').textContent    = s.employees || allEmployees.length || '—';
+    }).catch(()=>{});
 
-    if (['operator','admin','super_admin'].includes(role)) {
-        const ptId = currentUser?.selected_point_id || currentUser?.assigned_point_id;
-        if (ptId) {
-            fetch('/api/meal_points').then(r => r.json()).then(d => {
-                const pt  = (d.meal_points || []).find(p => p.id === ptId);
-                const el  = document.getElementById('setPtSchedules');
-                if (el && pt?.schedules?.length) {
-                    el.innerHTML = pt.schedules.map(s =>
-                        `<div class="setting-row"><label>${MEAL_LABELS[s.meal_type] || s.meal_type}</label><span>${s.start_time} – ${s.end_time}</span></div>`
-                    ).join('');
-                }
-            });
-        }
+    if (isAdmin) {
+        fetch('/api/config').then(r => r.json()).then(d => {
+            const el = id => document.getElementById(id);
+            if (el('setDbPath'))    el('setDbPath').textContent    = d.db_path  || '—';
+            if (el('setServerUrl')) el('setServerUrl').textContent = d.sync_url || '—';
+            if (el('setEnvPath'))   el('setEnvPath').textContent   = d.env_path || '—';
+            if (el('setVersion'))   el('setVersion').textContent   = d.version  || '—';
+            if (isSA) {
+                if (el('cfgSyncUrl'))   el('cfgSyncUrl').value   = d.sync_url   || '';
+                if (el('cfgSyncToken')) el('cfgSyncToken').value = d.sync_token || '';
+            }
+        }).catch(()=>{});
     }
+
+    // Schedule for current point (all users see their own point)
+    const ptId = currentUser?.selected_point_id || currentUser?.assigned_point_id;
+    fetch('/api/config/schedules').then(r => r.json()).then(d => {
+        const pts = d.meal_points || [];
+        // Own-point schedule card
+        const pt = pts.find(p => p.id === ptId);
+        const schedEl = document.getElementById('setPtSchedules');
+        if (schedEl && pt?.schedules?.length) {
+            schedEl.innerHTML = pt.schedules.map(s =>
+                `<div class="setting-row">
+                    <label>${MEAL_LABELS[s.meal_type] || s.meal_type}</label>
+                    <span>${s.start_time} – ${s.end_time}</span>
+                 </div>`
+            ).join('');
+        }
+        // Schedule editor for admin+
+        if (isAdmin) renderScheduleEditor(pts, ptId, isSA);
+    }).catch(()=>{});
+}
+
+const MEAL_TYPES_ALL = ['breakfast','lunch','dinner','night'];
+
+function renderScheduleEditor(allPts, ownPtId, isSA) {
+    const el = document.getElementById('scheduleEditor');
+    if (!el) return;
+    const pts = isSA ? allPts : allPts.filter(p => p.id === ownPtId);
+    if (!pts.length) { el.innerHTML = '<p class="setting-note">Нет доступных точек.</p>'; return; }
+
+    el.innerHTML = pts.map(pt => {
+        const schedMap = {};
+        (pt.schedules || []).forEach(s => { schedMap[s.meal_type] = s; });
+        const rows = MEAL_TYPES_ALL.map(mt => {
+            const s = schedMap[mt] || {};
+            return `<div class="schedule-row">
+                <label>${MEAL_LABELS[mt]}</label>
+                <input type="time" id="sch_${pt.id}_${mt}_start" value="${s.start_time || ''}">
+                <input type="time" id="sch_${pt.id}_${mt}_end"   value="${s.end_time   || ''}">
+                <span style="font-size:10px;color:var(--text-sub)">–</span>
+            </div>`;
+        }).join('');
+        return `<div class="schedule-pt-block">
+            <div class="schedule-pt-hdr">
+                <span><i class="fas fa-map-marker-alt" style="margin-right:6px;color:var(--blue-500)"></i>${esc(pt.point_name)}</span>
+                <button class="btn-save-sched" onclick="saveSchedule(${pt.id})"><i class="fas fa-save"></i> Сохранить</button>
+            </div>
+            <div class="schedule-pt-body">${rows}</div>
+        </div>`;
+    }).join('');
+}
+
+async function saveSchedule(pointId) {
+    const schedules = MEAL_TYPES_ALL.map(mt => ({
+        meal_type:  mt,
+        start_time: document.getElementById(`sch_${pointId}_${mt}_start`)?.value || '',
+        end_time:   document.getElementById(`sch_${pointId}_${mt}_end`)?.value   || '',
+    })).filter(s => s.start_time && s.end_time);
+
+    const res  = await fetch(`/api/config/schedules/${pointId}`, {
+        method:  'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ schedules }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+        // Refresh local mealPoints cache for auto meal type
+        loadMealPointsCache().then(updateMealTypeAuto);
+        showToast('Расписание сохранено');
+    }
+}
+
+async function saveSyncConfig() {
+    const url   = document.getElementById('cfgSyncUrl')?.value.trim();
+    const token = document.getElementById('cfgSyncToken')?.value.trim();
+    const res   = await fetch('/api/config', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ sync_url: url, sync_token: token }),
+    });
+    const data = await res.json();
+    const msg  = document.getElementById('cfgSaveMsg');
+    if (msg) { msg.style.display = ''; setTimeout(() => { msg.style.display = 'none'; }, 3000); }
+    if (!data.ok) alert(data.error || 'Ошибка сохранения');
+}
+
+function id(x) { return document.getElementById(x); }
+
+function showToast(msg) {
+    let t = document.getElementById('_toast');
+    if (!t) {
+        t = document.createElement('div');
+        t.id = '_toast';
+        t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:9px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;transition:opacity .3s;font-family:Onest,sans-serif;';
+        document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.opacity = '1';
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => { t.style.opacity = '0'; }, 2500);
 }
 
 // ── Sync ──────────────────────────────────────────────────

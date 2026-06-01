@@ -8,6 +8,7 @@ let dbPath = null;
 async function init() {
     const { app } = require('electron');
     dbPath = path.join(app.getPath('userData'), 'severfoods.db');
+    _dbPath = dbPath;
 
     const SQL = await initSqlJs();
     db = fs.existsSync(dbPath)
@@ -211,10 +212,22 @@ function setMeta(key, value) {
         [key, value === null ? null : String(value)]);
 }
 
+function updateSchedules(pointId, schedules) {
+    db.run('DELETE FROM meal_point_schedules WHERE meal_point_id = ?', [pointId]);
+    for (const s of schedules) {
+        db.run('INSERT INTO meal_point_schedules (meal_point_id, meal_type, start_time, end_time, days_of_week) VALUES (?,?,?,?,?)',
+            [pointId, s.meal_type, s.start_time, s.end_time, s.days_of_week || null]);
+    }
+    _save();
+}
+
+let _dbPath = null;
+function getDbPath() { return _dbPath; }
+
 module.exports = {
     init,
     upsertEmployee, getAllEmployees, getEmployeeByQr,
-    upsertMealPoint, getMealPoints,
+    upsertMealPoint, getMealPoints, updateSchedules,
     insertMealLog, getMealLogs, getUnsyncedLogs, markLogsSynced, hasTodayLog,
-    getMeta, setMeta,
+    getMeta, setMeta, getDbPath,
 };

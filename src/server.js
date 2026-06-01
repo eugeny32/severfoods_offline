@@ -6,6 +6,7 @@ const employeesRouter  = require('./routes/employees');
 const mealLogsRouter   = require('./routes/meal_logs');
 const mealPointsRouter = require('./routes/meal_points');
 const syncRouter       = require('./routes/sync');
+const configRouter     = require('./routes/config');
 
 const app = express();
 app.use(express.json());
@@ -16,6 +17,7 @@ app.use('/api/employees',   employeesRouter);
 app.use('/api/meal_logs',   mealLogsRouter);
 app.use('/api/meal_points', mealPointsRouter);
 app.use('/api/sync',        syncRouter);
+app.use('/api/config',      configRouter);
 
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, '../public/index.html')));
 

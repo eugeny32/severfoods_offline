@@ -839,17 +839,11 @@ function showQrModal(empId) {
     document.getElementById('qrModalCode').textContent = emp.qr_code;
 
     const canvas = document.getElementById('qrCanvas');
-    canvas.style.display = '';
     openModal('qrModal');
 
-    function tryRender(attempts) {
-        if (typeof QRCode !== 'undefined') {
-            QRCode.toCanvas(canvas, emp.qr_code, { width: 280, margin: 2 }, () => {});
-        } else if (attempts > 0) {
-            setTimeout(() => tryRender(attempts - 1), 200);
-        }
+    if (typeof QRCode !== 'undefined') {
+        QRCode.toCanvas(canvas, emp.qr_code, { width: 300, margin: 2, color: { dark:'#000000', light:'#ffffff' } }, () => {});
     }
-    tryRender(15);
 }
 
 // ── Modal helpers ─────────────────────────────────────────
@@ -931,13 +925,13 @@ function setTheme(t) {
 // ── Zoom ──────────────────────────────────────────────────
 function initZoom() {
     const z = parseInt(localStorage.getItem('zoom') || '100', 10);
-    document.documentElement.style.zoom = z + '%';
+    document.body.style.zoom = z / 100;
 }
 initZoom();
 
 function setZoom(val) {
     val = Math.max(70, Math.min(150, val));
-    document.documentElement.style.zoom = val + '%';
+    document.body.style.zoom = val / 100;
     localStorage.setItem('zoom', String(val));
     const el = document.getElementById('zoomVal');
     if (el) el.textContent = val + '%';
@@ -978,8 +972,8 @@ function renderSettings() {
             <div>
                 <div style="font-size:11px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px">Тема</div>
                 <div class="theme-picker">
-                    <button class="theme-btn${curTheme==='light'?' active':''}" data-theme="light" onclick="setTheme('light')"><i class="fas fa-sun"></i> Светлая</button>
-                    <button class="theme-btn${curTheme==='dark'?' active':''}"  data-theme="dark"  onclick="setTheme('dark')"><i class="fas fa-moon"></i> Тёмная</button>
+                    <button class="theme-btn${curTheme==='light'?' active':''}" data-theme="light" onclick="setTheme('light')" title="Светлая"><i class="fas fa-sun"></i></button>
+                    <button class="theme-btn${curTheme==='dark'?' active':''}"  data-theme="dark"  onclick="setTheme('dark')"  title="Тёмная"><i class="fas fa-moon"></i></button>
                 </div>
             </div>
             <div>

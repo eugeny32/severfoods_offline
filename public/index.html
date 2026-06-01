@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/app.css">
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -365,31 +366,22 @@
 
     <!-- ── Модальное окно: QR-код сотрудника ── -->
     <div class="modal-overlay" id="qrModal" onclick="closeModal('qrModal')">
-        <div class="modal-box" style="max-width:340px;text-align:center" onclick="event.stopPropagation()">
+        <div class="modal-box" style="max-width:360px;text-align:center" onclick="event.stopPropagation()">
             <div class="modal-header">
                 <div class="modal-title"><i class="fas fa-qrcode"></i> QR-пропуск</div>
                 <button class="modal-close" onclick="closeModal('qrModal')"><i class="fas fa-times"></i></button>
             </div>
             <div style="padding:20px">
-                <div id="qrModalName" style="font-size:15px;font-weight:700;margin-bottom:16px"></div>
-                <canvas id="qrCanvas" style="border-radius:8px;border:1px solid #e2e8f0"></canvas>
-                <div id="qrModalCode" style="font-size:10px;color:#94a3b8;margin-top:8px;font-family:monospace;word-break:break-all"></div>
+                <div id="qrModalName" style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--text-main)"></div>
+                <canvas id="qrCanvas" style="border-radius:8px;border:1px solid var(--border);max-width:100%"></canvas>
+                <div id="qrModalCode" style="font-size:10px;color:var(--text-sub);margin-top:8px;font-family:monospace;word-break:break-all"></div>
             </div>
         </div>
     </div>
 
 </div>
 
-<script>
-(function(){
-    var s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
-    document.head.appendChild(s);
-    var q = document.createElement('script');
-    q.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
-    document.head.appendChild(q);
-})();
-</script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <script src="assets/app.js"></script>
 </body>
 </html>

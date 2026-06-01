@@ -491,7 +491,47 @@ async function handleQrScan(qrData) {
     }
 }
 
+// ── Audio + visual feedback ────────────────────────────────
+const _audioCtx = (() => {
+    try { return new (window.AudioContext || window.webkitAudioContext)(); } catch(_) { return null; }
+})();
+
+function playBeep(type) {
+    if (!_audioCtx) return;
+    const configs = {
+        ok:    [{ f:880, t:0,    d:0.12, g:0.4 }, { f:1320, t:0.10, d:0.18, g:0.35 }],
+        dup:   [{ f:440, t:0,    d:0.18, g:0.35 }, { f:440, t:0.20, d:0.18, g:0.3  }],
+        error: [{ f:220, t:0,    d:0.25, g:0.4  }, { f:180, t:0.22, d:0.25, g:0.35 }],
+    };
+    const now = _audioCtx.currentTime;
+    (configs[type] || configs.error).forEach(({ f, t, d, g }) => {
+        const osc  = _audioCtx.createOscillator();
+        const gain = _audioCtx.createGain();
+        osc.connect(gain); gain.connect(_audioCtx.destination);
+        osc.type = type === 'ok' ? 'sine' : 'square';
+        osc.frequency.setValueAtTime(f, now + t);
+        gain.gain.setValueAtTime(g, now + t);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + t + d);
+        osc.start(now + t);
+        osc.stop(now + t + d + 0.05);
+    });
+}
+
+let _flashTimer = null;
+function flashStatus(type) {
+    const page = document.getElementById('page-scanner');
+    const box  = document.querySelector('.scanner-box');
+    const cls  = `flash-${type}`;
+    clearTimeout(_flashTimer);
+    [page, box].forEach(el => { if (el) { el.className = el.className.replace(/flash-\w+/g,'').trim() + ' ' + cls; } });
+    _flashTimer = setTimeout(() => {
+        [page, box].forEach(el => { if (el) el.classList.remove(cls); });
+    }, 1400);
+}
+
 function showResult(emp, type, message) {
+    playBeep(type);
+    flashStatus(type);
     const icons  = { ok:'✅', error:'❌', dup:'⚠️' };
     const msgCls = { ok:'msg-ok', error:'msg-error', dup:'msg-dup' };
     document.getElementById('resultIdle').style.display  = 'none';

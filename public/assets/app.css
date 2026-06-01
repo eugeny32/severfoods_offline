@@ -281,6 +281,8 @@ body {
 .org-section.collapsed .org-cards { display:none; }
 /* ── Org chips (identical to web version) ── */
 .org-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-bottom:4px; }
+.empty-state { grid-column:1/-1; display:flex; flex-direction:column; align-items:center; gap:12px; padding:48px 20px; color:#94a3b8; font-size:13px; text-align:center; }
+.empty-state i { font-size:40px; }
 .org-chip {
     background:#fff; border:1.5px solid var(--gray-200); border-radius:14px;
     padding:14px 12px; text-align:center; cursor:pointer;

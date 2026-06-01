@@ -450,10 +450,20 @@ function renderOrgChips() {
     const orgs = {};
     allEmployees.forEach(e => { const o = e.organization || 'Без организации'; orgs[o] = (orgs[o] || 0) + 1; });
 
-    document.getElementById('orgChips').innerHTML = Object.entries(orgs)
-        .sort(([a],[b]) => a.localeCompare(b,'ru'))
-        .map(([org, cnt]) => `
-        <button class="org-chip" onclick="openOrgModal(${JSON.stringify(org)})">
+    const entries = Object.entries(orgs).sort(([a],[b]) => a.localeCompare(b,'ru'));
+
+    if (!entries.length) {
+        document.getElementById('orgChips').innerHTML =
+            '<div class="empty-state"><i class="fas fa-users-slash"></i><p>Нет данных о сотрудниках.<br>Выполните синхронизацию с сервером.</p></div>';
+        return;
+    }
+
+    // Store org names in a registry to avoid quote issues in onclick
+    window._orgRegistry = Object.fromEntries(entries.map(([o],i) => [i, o]));
+
+    document.getElementById('orgChips').innerHTML = entries
+        .map(([org, cnt], i) => `
+        <button class="org-chip" onclick="openOrgModal(window._orgRegistry[${i}])">
             <div class="org-chip-name">${esc(org)}</div>
             <div class="org-chip-count">${cnt}</div>
             <div class="org-chip-label">сотрудников</div>

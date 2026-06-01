@@ -339,11 +339,7 @@ body {
 .emp-card-sub  { font-size:10.5px; color:var(--text-sub); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
 /* ── Chat ── */
-.chat-nav-bar { display:flex; align-items:center; gap:10px; padding:7px 13px; background:var(--sidebar-bg); flex-shrink:0; }
-.chat-back-btn { display:flex; align-items:center; gap:5px; padding:5px 12px; border-radius:7px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.07); color:#fff; font-size:12px; font-weight:600; cursor:pointer; font-family:'Onest',sans-serif; transition:background .13s; }
-.chat-back-btn:hover { background:rgba(255,255,255,.16); }
-.chat-nav-title { color:rgba(255,255,255,.65); font-size:12px; font-weight:600; }
-.chat-frame-wrap { flex:1; display:flex; flex-direction:column; background:var(--bg-card); overflow:hidden; min-height:0; }
+.chat-frame-wrap { flex:1; display:flex; flex-direction:column; background:#fff; overflow:hidden; min-height:0; }
 .chat-offline { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:var(--text-sub); font-size:13px; flex:1; font-family:'Onest',sans-serif; }
 
 /* ── Logs ── */

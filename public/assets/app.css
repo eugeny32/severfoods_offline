@@ -153,7 +153,7 @@ body {
 
 /* Sidebar */
 .sidebar {
-    width:220px; min-width:220px; background:var(--blue-800);
+    width:220px; min-width:220px; background:#17212b;
     display:flex; flex-direction:column; padding:15px 11px 13px;
     gap:5px; overflow:hidden;
 }
@@ -230,6 +230,11 @@ body {
 .qr-input.scanner-active { border-color:#22c55e; box-shadow:0 0 0 3px rgba(34,197,94,.1); }
 .btn-manual-check { margin-top:10px; width:100%; padding:9px; border-radius:8px; border:none; background:var(--blue-800); color:#fff; font-size:13px; font-weight:600; font-family:'Onest',sans-serif; cursor:pointer; }
 .btn-manual-check:hover { background:#003380; }
+.btn-qr-action { flex-shrink:0; padding:10px 14px; border-radius:9px; border:1.5px solid var(--gray-200); background:#fff; color:#475569; font-size:13px; font-weight:600; font-family:'Onest',sans-serif; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:6px; transition:all .15s; }
+.btn-qr-action:hover { background:var(--gray-100); border-color:#94a3b8; }
+.btn-qr-cam { border-color:#93c5fd; background:#eff6ff; color:var(--blue-800); }
+.btn-qr-cam:hover { background:#dbeafe; }
+.scanner-area-log { width:100%; }
 
 /* Today stats row */
 .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px; }
@@ -272,10 +277,10 @@ body {
 .scan-stop-btn { padding:5px 14px; border-radius:7px; background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.25); color:#fff; font-size:11px; cursor:pointer; font-family:'Onest',sans-serif; }
 .scan-stop-btn:hover { background:rgba(255,255,255,.22); }
 
-/* Scan log panel — height set by JS to match .scanner-box */
+/* Scan log panel */
 .scan-log-panel {
     background:#fff; border-radius:14px; border:1.5px solid var(--gray-200);
-    display:flex; flex-direction:column; overflow:hidden;
+    display:flex; flex-direction:column; overflow:hidden; height:260px;
 }
 .result-card { display:flex; gap:12px; align-items:flex-start; padding:14px 16px; border-bottom:1px solid var(--gray-100); flex-shrink:0; }
 .result-icon { width:44px; height:44px; border-radius:10px; flex-shrink:0; font-size:22px; display:flex; align-items:center; justify-content:center; }

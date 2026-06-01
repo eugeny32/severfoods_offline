@@ -103,18 +103,15 @@ function initUsbQrInput() {
 const ROLE_LABELS = { operator:'Оператор', admin:'Администратор', super_admin:'Супер-администратор' };
 const ROLE_COLORS = { operator:'#c2410c', admin:'#9b1c1c', super_admin:'#166534' };
 
-// ── Sync log panel height to camera box ───────────────────
-function syncLogHeight() {
-    const box = document.querySelector('.scanner-box');
-    const log = document.querySelector('.scan-log-panel');
-    if (box && log) log.style.height = box.offsetHeight + 'px';
+// ── Camera modal ───────────────────────────────────────────
+function openCamModal() {
+    openModal('camModal');
+    startScanner();
 }
-const _logResizeObs = new ResizeObserver(syncLogHeight);
-document.addEventListener('DOMContentLoaded', () => {
-    const box = document.querySelector('.scanner-box');
-    if (box) _logResizeObs.observe(box);
-    syncLogHeight();
-});
+function closeCamModal() {
+    stopScanner();
+    closeModal('camModal');
+}
 
 // ── Init ──────────────────────────────────────────────────
 (async function boot() {
@@ -412,7 +409,6 @@ function startScanner() {
         })
         .then(() => {
             scannerActive = true;
-            document.getElementById('scanStartBtn').style.display  = 'none';
             const ui = document.getElementById('scanActiveUi');
             ui.style.display = 'flex';
 
@@ -440,9 +436,7 @@ function stopScanner() {
     if (videoStream)  { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
     const video = document.getElementById('scannerVideo');
     if (video) video.srcObject = null;
-    const startBtn = document.getElementById('scanStartBtn');
     const activeUi = document.getElementById('scanActiveUi');
-    if (startBtn) startBtn.style.display = '';
     if (activeUi) activeUi.style.display = 'none';
 }
 

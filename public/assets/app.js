@@ -552,9 +552,10 @@ async function loadTodayStats() {
     try {
         const today = new Date().toISOString().slice(0, 10);
         const ptId  = currentUser?.selected_point_id || currentUser?.assigned_point_id || null;
+        const since = `${today} 00:00:00`; // space-separated to match SQLite storage format
         const url   = ptId
-            ? `/api/meal_logs?limit=2000&since=${today}T00:00:00&point_id=${ptId}`
-            : `/api/meal_logs?limit=2000&since=${today}T00:00:00`;
+            ? `/api/meal_logs?limit=2000&since=${encodeURIComponent(since)}&point_id=${ptId}`
+            : `/api/meal_logs?limit=2000&since=${encodeURIComponent(since)}`;
         const data  = await fetch(url).then(r => r.json());
 
         for (const k of Object.keys(_todayStats)) _todayStats[k] = 0;

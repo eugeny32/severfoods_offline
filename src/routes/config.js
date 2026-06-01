@@ -1,6 +1,7 @@
 const router  = require('express').Router();
 const fs      = require('fs');
 const path    = require('path');
+const { execSync } = require('child_process');
 const db      = require('../db');
 
 const ENV_PATH = path.join(require('electron').app.getPath('userData'), '../../../.env');
@@ -52,6 +53,7 @@ router.get('/', (req, res) => {
         sync_url:   env.OFFLINE_SYNC_URL   || 'https://www.severfoods.ru/api/offline_sync.php',
         sync_token: env.OFFLINE_SYNC_TOKEN || '',
         version:    process.env.npm_package_version || '1.0.0',
+        commit_date: (() => { try { return execSync('git log -1 --format=%cd --date=format:%d.%m.%Y', { cwd: path.join(__dirname, '../..'), stdio: ['pipe','pipe','pipe'] }).toString().trim(); } catch(_){ return '—'; } })(),
         db_path:    db.getDbPath ? db.getDbPath() : '—',
         env_path:   findEnvPath(),
     });

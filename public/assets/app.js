@@ -1050,10 +1050,17 @@ function renderSettings() {
 
     // 8. About + logout
     grid.innerHTML += card('О программе', 'info-circle', `
-        <div class="setting-row"><label>Пользователь</label><span>${esc(currentUser?.full_name || '—')}</span></div>
-        <div class="setting-row"><label>Роль</label><span>${esc(ROLE_LABELS[role] || 'Сотрудник')}</span></div>
+        <div class="about-block">
+            <div class="about-app-name">СеверФудс</div>
+            <div class="about-meta">
+                <span class="about-version" id="setVersionAbout">Версия —</span>
+                <span class="about-sep">·</span>
+                <span class="about-date" id="setCommitDate">—</span>
+            </div>
+            <div class="about-author">Автор: Пальченков Евгений Иванович · ООО «Север»</div>
+        </div>
         <button class="btn-logout-settings" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Выйти из аккаунта</button>
-    `);
+    `, true);
 
     // ── Async data loading ──
     fetch('/api/sync/status').then(r => r.json()).then(d => {
@@ -1064,19 +1071,21 @@ function renderSettings() {
         if (el('setEmp'))    el('setEmp').textContent    = s.employees || allEmployees.length || '—';
     }).catch(()=>{});
 
-    if (isAdmin) {
-        fetch('/api/config').then(r => r.json()).then(d => {
-            const el = id => document.getElementById(id);
+    fetch('/api/config').then(r => r.json()).then(d => {
+        const el = id => document.getElementById(id);
+        if (el('setVersionAbout')) el('setVersionAbout').textContent = 'Версия ' + (d.version || '—');
+        if (el('setCommitDate'))   el('setCommitDate').textContent   = d.commit_date || '—';
+        if (isAdmin) {
             if (el('setDbPath'))    el('setDbPath').textContent    = d.db_path  || '—';
             if (el('setServerUrl')) el('setServerUrl').textContent = d.sync_url || '—';
             if (el('setEnvPath'))   el('setEnvPath').textContent   = d.env_path || '—';
             if (el('setVersion'))   el('setVersion').textContent   = d.version  || '—';
-            if (isSA) {
-                if (el('cfgSyncUrl'))   el('cfgSyncUrl').value   = d.sync_url   || '';
-                if (el('cfgSyncToken')) el('cfgSyncToken').value = d.sync_token || '';
-            }
-        }).catch(()=>{});
-    }
+        }
+        if (isSA) {
+            if (el('cfgSyncUrl'))   el('cfgSyncUrl').value   = d.sync_url   || '';
+            if (el('cfgSyncToken')) el('cfgSyncToken').value = d.sync_token || '';
+        }
+    }).catch(()=>{});
 
     // Schedule for current point (all users see their own point)
     const ptId = currentUser?.selected_point_id || currentUser?.assigned_point_id;

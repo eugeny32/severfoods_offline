@@ -854,6 +854,14 @@ function closeModal(id) {
     document.getElementById(id).classList.remove('open');
 }
 
+const CHAT_SCROLLBAR_CSS = `
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(148,163,184,.35);border-radius:10px}
+::-webkit-scrollbar-thumb:hover{background:rgba(148,163,184,.65)}
+::-webkit-scrollbar-corner{background:transparent}
+`;
+
 // ── Chat ──────────────────────────────────────────────────
 function loadChat() {
     fetch('/api/sync/status').then(r => r.json()).then(d => {
@@ -863,7 +871,13 @@ function loadChat() {
         if (online) {
             offline.style.display  = 'none';
             chatView.style.display = '';
-            if (!chatLoaded) { chatView.src = 'https://severfoods.ru/chat.php'; chatLoaded = true; }
+            if (!chatLoaded) {
+                chatView.src = 'https://severfoods.ru/chat.php';
+                chatLoaded = true;
+                chatView.addEventListener('dom-ready', () => {
+                    chatView.insertCSS(CHAT_SCROLLBAR_CSS).catch(() => {});
+                }, { once: false });
+            }
         } else {
             chatView.style.display = 'none';
             offline.style.display  = 'flex';

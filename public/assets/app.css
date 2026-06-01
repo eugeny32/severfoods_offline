@@ -275,16 +275,109 @@ body {
 .org-chevron { transition:transform .2s; color:var(--gray-500); font-size:12px; }
 .org-section.collapsed .org-chevron { transform:rotate(-90deg); }
 .org-section.collapsed .org-cards { display:none; }
-.org-name  { font-size:14px; font-weight:700; color:#0f172a; }
-.org-count { font-size:11px; font-weight:700; color:#fff; background:var(--blue-800); padding:2px 9px; border-radius:20px; }
+/* ── Org chips (identical to web version) ── */
+.org-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-bottom:4px; }
+.org-chip {
+    background:#fff; border:1.5px solid var(--gray-200); border-radius:14px;
+    padding:14px 12px; text-align:center; cursor:pointer;
+    transition:all .2s; color:var(--gray-500);
+    font-family:'Onest',sans-serif;
+}
+.org-chip:hover { transform:translateY(-2px); box-shadow:0 4px 14px rgba(0,0,0,.1); background:#e8f0fe; border-color:#93c5fd; }
+.org-chip.active { background:var(--blue-800); border-color:var(--blue-800); color:#fff; box-shadow:0 4px 14px rgba(0,51,102,.3); }
+.org-chip-name { font-weight:700; color:var(--blue-800); font-size:13px; margin-bottom:6px; word-break:break-word; line-height:1.3; }
+.org-chip.active .org-chip-name { color:#fff; }
+.org-chip-count { font-size:28px; font-weight:800; color:#22c55e; line-height:1; }
+.org-chip.active .org-chip-count { color:#86efac; }
+.org-chip-label { font-size:10px; color:#94a3b8; margin-top:4px; font-weight:500; }
+.org-chip.active .org-chip-label { color:rgba(255,255,255,.6); }
 
-.org-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(255px,1fr)); }
-.emp-card  { display:flex; align-items:flex-start; gap:10px; padding:10px 14px; border-bottom:1px solid var(--gray-100); transition:background .1s; }
-.emp-card:hover { background:var(--gray-50); }
-.emp-card:last-child { border-bottom:none; }
-.emp-avatar { width:36px; height:36px; border-radius:9px; flex-shrink:0; color:#fff; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; }
-.emp-card-body { flex:1; min-width:0; }
-.emp-card-name { font-size:13px; font-weight:700; color:#0f172a; }
+.total-badge { font-size:14px; font-weight:600; color:#94a3b8; }
+
+/* ── Employee table ── */
+.emp-table-wrap { overflow-x:auto; }
+.emp-table { width:100%; border-collapse:collapse; font-size:13px; }
+.emp-table th { background:var(--gray-50); padding:8px 12px; text-align:left; font-weight:700; color:var(--gray-500); font-size:11px; border-bottom:1px solid var(--gray-200); text-transform:uppercase; letter-spacing:.4px; }
+.emp-table td { padding:9px 12px; border-bottom:1px solid var(--gray-100); vertical-align:middle; }
+.emp-table tr:last-child td { border-bottom:none; }
+.emp-table tr:hover td { background:var(--gray-50); }
+.emp-name { font-weight:700; font-size:13px; color:#0f172a; }
+.emp-org  { font-size:11px; color:var(--gray-500); margin-top:1px; }
+.emp-actions { display:flex; gap:5px; align-items:center; }
+.btn-sm {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:30px; height:30px; border-radius:7px; border:1.5px solid var(--gray-200);
+    background:#fff; color:var(--gray-500); font-size:12px; cursor:pointer;
+    transition:all .15s; text-decoration:none;
+}
+.btn-sm:hover  { background:var(--gray-100); border-color:#94a3b8; color:#0f172a; }
+.btn-sm.green  { border-color:#86efac; background:#f0fdf4; color:#166534; }
+.btn-sm.green:hover { background:#dcfce7; }
+.btn-sm.blue   { border-color:#93c5fd; background:#eff6ff; color:var(--blue-700); }
+.btn-sm.blue:hover  { background:#dbeafe; }
+.btn-sm.danger { border-color:#fca5a5; background:#fff5f5; color:#991b1b; }
+.btn-sm.danger:hover { background:#fee2e2; }
+
+.qr-status-badge { font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; }
+.qr-status-badge.active  { background:#dcfce7; color:#166534; }
+.qr-status-badge.expired { background:#fee2e2; color:#991b1b; }
+.qr-status-badge.blocked { background:#fef9c3; color:#854d0e; }
+
+/* ── Modals ── */
+.modal-overlay {
+    position:fixed; inset:0; z-index:200;
+    background:rgba(0,0,0,.5); backdrop-filter:blur(4px);
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
+    opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.modal-overlay.open { opacity:1; pointer-events:all; }
+.modal-box {
+    background:#fff; border-radius:16px; width:100%;
+    box-shadow:0 20px 60px rgba(0,0,0,.25);
+    animation:slideUp .25s ease;
+    max-height:90vh; display:flex; flex-direction:column;
+}
+@keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+.modal-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px; border-bottom:1px solid var(--gray-200); flex-shrink:0;
+}
+.modal-title { font-size:16px; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:8px; }
+.modal-close {
+    width:32px; height:32px; border-radius:8px; border:none;
+    background:var(--gray-100); color:var(--gray-500); font-size:14px;
+    cursor:pointer; transition:all .13s; display:flex; align-items:center; justify-content:center;
+}
+.modal-close:hover { background:var(--gray-200); color:#0f172a; }
+
+/* ── Employee card modal ── */
+.emp-card-info { padding:20px; display:flex; flex-direction:column; gap:12px; }
+.emp-card-top  { display:flex; align-items:center; gap:14px; padding-bottom:14px; border-bottom:1px solid var(--gray-100); }
+.emp-card-avatar { width:56px; height:56px; border-radius:14px; flex-shrink:0; color:#fff; font-size:20px; font-weight:800; display:flex; align-items:center; justify-content:center; }
+.emp-card-fullname { font-size:17px; font-weight:800; color:#0f172a; }
+.emp-card-role-badge { font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; display:inline-block; margin-top:4px; }
+.emp-info-row { display:flex; gap:8px; font-size:13px; }
+.emp-info-row .lbl { min-width:130px; color:var(--gray-500); font-weight:500; flex-shrink:0; }
+.emp-info-row .val { color:#0f172a; font-weight:600; }
+.emp-card-actions { display:flex; gap:8px; padding-top:14px; border-top:1px solid var(--gray-100); flex-wrap:wrap; }
+
+/* ── Manual pass modal ── */
+.manual-emp-name { font-size:16px; font-weight:700; color:#0f172a; }
+.manual-meal-btns { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.manual-btn {
+    display:flex; align-items:center; gap:8px;
+    padding:12px 16px; border-radius:10px;
+    border:1.5px solid var(--gray-200); background:#fff;
+    font-size:14px; font-weight:600; font-family:'Onest',sans-serif;
+    cursor:pointer; transition:all .15s; color:#0f172a;
+}
+.manual-btn:hover { background:var(--gray-50); border-color:#94a3b8; }
+.mt-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.mt-dot.breakfast { background:#d97706; }
+.mt-dot.lunch     { background:#059669; }
+.mt-dot.dinner    { background:#7c3aed; }
+.mt-dot.night     { background:#0369a1; }
 .emp-card-sub  { font-size:10.5px; color:var(--gray-500); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .emp-card-role { font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; display:inline-block; margin-top:4px; }
 

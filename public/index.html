@@ -209,11 +209,18 @@
         <!-- ── Сотрудники ── -->
         <section class="page" id="page-employees">
             <div class="page-header">
-                <h1>Сотрудники</h1>
-                <input class="search-input" id="empSearch" placeholder="Поиск…" oninput="filterEmployees()">
-                <span class="emp-total" id="empTotal"></span>
+                <h1>Сотрудники <span id="empTotalBadge" class="total-badge"></span></h1>
+                <input class="search-input" id="empSearch" placeholder="Поиск по ФИО, организации…" oninput="searchEmployees()">
             </div>
-            <div class="org-list" id="orgList"></div>
+            <div class="org-grid" id="orgChips"></div>
+            <div id="empSearchResults" style="display:none">
+                <div class="emp-table-wrap">
+                    <table class="emp-table">
+                        <thead><tr><th>Сотрудник</th><th>QR-статус</th><th>Действия</th></tr></thead>
+                        <tbody id="empSearchBody"></tbody>
+                    </table>
+                </div>
+            </div>
         </section>
 
         <!-- ── Чат ── -->
@@ -261,9 +268,80 @@
         </section>
 
     </main>
+
+    <!-- ── Модальное окно: список сотрудников организации ── -->
+    <div class="modal-overlay" id="orgModal" onclick="closeModal('orgModal')">
+        <div class="modal-box" style="max-width:700px" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title" id="orgModalTitle"><i class="fas fa-users"></i> Сотрудники</div>
+                <button class="modal-close" onclick="closeModal('orgModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="orgModalBody" style="overflow-y:auto;max-height:60vh"></div>
+        </div>
+    </div>
+
+    <!-- ── Модальное окно: карточка сотрудника ── -->
+    <div class="modal-overlay" id="empCardModal" onclick="closeModal('empCardModal')">
+        <div class="modal-box" style="max-width:520px" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-user"></i> Сотрудник</div>
+                <button class="modal-close" onclick="closeModal('empCardModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="empCardBody"></div>
+        </div>
+    </div>
+
+    <!-- ── Модальное окно: ручной пропуск ── -->
+    <div class="modal-overlay" id="manualModal" onclick="closeModal('manualModal')">
+        <div class="modal-box" style="max-width:420px" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-sign-out-alt"></i> Ручной пропуск</div>
+                <button class="modal-close" onclick="closeModal('manualModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="manualModalBody" style="padding:20px">
+                <div class="manual-emp-name" id="manualEmpName"></div>
+                <p style="font-size:13px;color:#64748b;margin:8px 0 18px">Выберите тип питания:</p>
+                <div class="manual-meal-btns">
+                    <button class="manual-btn" onclick="doManualPass('breakfast')"><span class="mt-dot breakfast"></span>Завтрак</button>
+                    <button class="manual-btn" onclick="doManualPass('lunch')"><span class="mt-dot lunch"></span>Обед</button>
+                    <button class="manual-btn" onclick="doManualPass('dinner')"><span class="mt-dot dinner"></span>Ужин</button>
+                    <button class="manual-btn" onclick="doManualPass('night')"><span class="mt-dot night"></span>Ночной</button>
+                </div>
+                <div id="manualResult" style="margin-top:16px"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Модальное окно: QR-код сотрудника ── -->
+    <div class="modal-overlay" id="qrModal" onclick="closeModal('qrModal')">
+        <div class="modal-box" style="max-width:340px;text-align:center" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-qrcode"></i> QR-пропуск</div>
+                <button class="modal-close" onclick="closeModal('qrModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="padding:20px">
+                <div id="qrModalName" style="font-size:15px;font-weight:700;margin-bottom:16px"></div>
+                <canvas id="qrCanvas" style="border-radius:8px;border:1px solid #e2e8f0"></canvas>
+                <div id="qrModalCode" style="font-size:10px;color:#94a3b8;margin-top:8px;font-family:monospace;word-break:break-all"></div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script>
+(function(){
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+    document.head.appendChild(s);
+    var q = document.createElement('script');
+    q.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
+    document.head.appendChild(q);
+})();
+</script>
+<script src="assets/app.js"></script>
+</body>
+</html>
 (function(){
     var s = document.createElement('script');
     s.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';

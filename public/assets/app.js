@@ -355,56 +355,191 @@ function clearResult() {
     document.getElementById('resultCard').style.display = 'none';
 }
 
-// ── Employees by org ───────────────────────────────────────
+// ── Employees ──────────────────────────────────────────────
 async function loadEmployees() {
     const res  = await fetch('/api/employees');
     const data = await res.json();
     allEmployees = data.employees || [];
-    renderEmployeesByOrg(allEmployees);
+    renderOrgChips();
+    document.getElementById('empTotalBadge').textContent = `(${allEmployees.length})`;
 }
 
-function filterEmployees() {
-    const q = document.getElementById('empSearch').value.toLowerCase();
-    renderEmployeesByOrg(q ? allEmployees.filter(e =>
+function renderOrgChips() {
+    const orgs = {};
+    allEmployees.forEach(e => { const o = e.organization || 'Без организации'; orgs[o] = (orgs[o] || 0) + 1; });
+
+    document.getElementById('orgChips').innerHTML = Object.entries(orgs)
+        .sort(([a],[b]) => a.localeCompare(b,'ru'))
+        .map(([org, cnt]) => `
+        <button class="org-chip" onclick="openOrgModal(${JSON.stringify(org)})">
+            <div class="org-chip-name">${esc(org)}</div>
+            <div class="org-chip-count">${cnt}</div>
+            <div class="org-chip-label">сотрудников</div>
+        </button>`).join('');
+}
+
+function searchEmployees() {
+    const q = document.getElementById('empSearch').value.toLowerCase().trim();
+    const resultsWrap = document.getElementById('empSearchResults');
+    const chipsWrap   = document.getElementById('orgChips');
+
+    if (!q) {
+        resultsWrap.style.display = 'none';
+        chipsWrap.style.display   = '';
+        return;
+    }
+
+    chipsWrap.style.display   = 'none';
+    resultsWrap.style.display = '';
+
+    const list = allEmployees.filter(e =>
         e.full_name.toLowerCase().includes(q) ||
         (e.organization || '').toLowerCase().includes(q) ||
-        (e.department   || '').toLowerCase().includes(q)) : allEmployees);
+        (e.department   || '').toLowerCase().includes(q));
+
+    document.getElementById('empSearchBody').innerHTML = list.length
+        ? list.map(empTableRow).join('')
+        : '<tr><td colspan="3" style="text-align:center;color:#94a3b8;padding:24px">Ничего не найдено</td></tr>';
 }
 
-function renderEmployeesByOrg(list) {
-    document.getElementById('empTotal').textContent = `${list.length} сотрудников`;
-    const orgs = {};
-    list.forEach(e => { const o = e.organization || 'Без организации'; (orgs[o] = orgs[o] || []).push(e); });
+function openOrgModal(org) {
+    const list = allEmployees
+        .filter(e => (e.organization || 'Без организации') === org)
+        .sort((a,b) => a.full_name.localeCompare(b.full_name,'ru'));
 
-    document.getElementById('orgList').innerHTML = Object.entries(orgs)
-        .sort(([a],[b]) => a.localeCompare(b,'ru'))
-        .map(([org, emps]) => `
-        <div class="org-section">
-            <div class="org-header" onclick="this.closest('.org-section').classList.toggle('collapsed')">
-                <div class="org-header-left">
-                    <i class="fas fa-chevron-down org-chevron"></i>
-                    <span class="org-name">${esc(org)}</span>
-                </div>
-                <span class="org-count">${emps.length}</span>
-            </div>
-            <div class="org-cards">${emps.map(empCard).join('')}</div>
-        </div>`).join('');
+    document.getElementById('orgModalTitle').innerHTML = `<i class="fas fa-users"></i> ${esc(org)}`;
+    document.getElementById('orgModalBody').innerHTML = `
+        <div style="font-size:12px;color:#64748b;padding:10px 16px 0">Всего: <strong>${list.length}</strong> сотрудников</div>
+        <div class="emp-table-wrap" style="padding:8px 4px">
+            <table class="emp-table">
+                <thead><tr><th>Сотрудник</th><th>QR-статус</th><th>Действия</th></tr></thead>
+                <tbody>${list.map(empTableRow).join('')}</tbody>
+            </table>
+        </div>`;
+    openModal('orgModal');
 }
 
-function empCard(e) {
-    const initials = e.full_name.split(' ').slice(0,2).map(w => w[0]).join('');
+function empTableRow(e) {
+    const sc    = e.qr_status || 'active';
+    const scMap = { active:'Активен', expired:'Истёк', blocked:'Заблок.' };
+    const nameJ = JSON.stringify(e.full_name).replace(/[<>&]/g, c => ({'<':'<','>':'>','&':'&'}[c]));
+    const idStr = e.id;
+
+    let actions = `<button class="btn-sm green" title="Ручной пропуск" onclick="openManualModal(${idStr},${nameJ})"><i class="fas fa-sign-out-alt"></i></button>`;
+    if (e.qr_code) {
+        actions += `<button class="btn-sm blue" title="QR-код" onclick="showQrModal(${idStr},${nameJ})"><i class="fas fa-qrcode"></i></button>`;
+    }
+    actions += `<button class="btn-sm" title="Подробнее" onclick="openEmpCard(${idStr})"><i class="fas fa-info-circle"></i></button>`;
+
+    return `<tr>
+        <td><div class="emp-name">${esc(e.full_name)}</div>
+            <div class="emp-org">${esc(e.department || e.organization || '')}</div></td>
+        <td><span class="qr-status-badge ${sc}">${scMap[sc] || sc}</span></td>
+        <td><div class="emp-actions">${actions}</div></td>
+    </tr>`;
+}
+
+function openEmpCard(empId) {
+    const e = allEmployees.find(x => x.id === empId);
+    if (!e) return;
+
+    const rc       = ROLE_COLORS[e.role] || '#003366';
     const rl       = ROLE_LABELS[e.role] || '';
-    const rc       = ROLE_COLORS[e.role];
-    const roleHtml = rl ? `<span class="emp-card-role" style="background:${rc}22;color:${rc}">${esc(rl)}</span>` : '';
-    return `<div class="emp-card">
-        <div class="emp-avatar" style="background:${rc || '#003366'}">${initials}</div>
-        <div class="emp-card-body">
-            <div class="emp-card-name">${esc(e.full_name)}</div>
-            ${e.department ? `<div class="emp-card-sub">${esc(e.department)}</div>` : ''}
-            ${e.position   ? `<div class="emp-card-sub" style="color:#94a3b8">${esc(e.position)}</div>` : ''}
-            ${roleHtml}
-        </div>
-    </div>`;
+    const initials = e.full_name.split(' ').slice(0,2).map(w=>w[0]).join('');
+    const scMap    = { active:'Активен', expired:'Истёк', blocked:'Заблок.' };
+    const sc       = e.qr_status || 'active';
+    const scClass  = { active:'#166534', expired:'#991b1b', blocked:'#854d0e' };
+
+    const nameJ = JSON.stringify(e.full_name).replace(/[<>&]/g, c => ({'<':'<','>':'>','&':'&'}[c]));
+
+    document.getElementById('empCardBody').innerHTML = `
+        <div class="emp-card-info">
+            <div class="emp-card-top">
+                <div class="emp-card-avatar" style="background:${rc}">${initials}</div>
+                <div>
+                    <div class="emp-card-fullname">${esc(e.full_name)}</div>
+                    ${rl ? `<span class="emp-card-role-badge" style="background:${rc}22;color:${rc}">${esc(rl)}</span>` : ''}
+                </div>
+            </div>
+            ${e.organization ? `<div class="emp-info-row"><span class="lbl"><i class="fas fa-building"></i> Организация</span><span class="val">${esc(e.organization)}</span></div>` : ''}
+            ${e.department   ? `<div class="emp-info-row"><span class="lbl"><i class="fas fa-sitemap"></i> Отдел</span><span class="val">${esc(e.department)}</span></div>` : ''}
+            ${e.position     ? `<div class="emp-info-row"><span class="lbl"><i class="fas fa-briefcase"></i> Должность</span><span class="val">${esc(e.position)}</span></div>` : ''}
+            ${e.birth_date   ? `<div class="emp-info-row"><span class="lbl"><i class="fas fa-birthday-cake"></i> Дата рождения</span><span class="val">${esc(e.birth_date)}</span></div>` : ''}
+            ${e.vjg_type     ? `<div class="emp-info-row"><span class="lbl"><i class="fas fa-utensils"></i> Тип питания</span><span class="val">${esc(e.vjg_type)}</span></div>` : ''}
+            <div class="emp-info-row"><span class="lbl"><i class="fas fa-qrcode"></i> QR-статус</span>
+                <span class="val" style="color:${scClass[sc]||'#0f172a'}">${scMap[sc]||sc}
+                ${e.qr_expires_at ? `<span style="color:#94a3b8;font-weight:400"> · до ${esc(e.qr_expires_at)}</span>` : ''}</span></div>
+            <div class="emp-card-actions">
+                <button class="btn-sm green" onclick="openManualModal(${e.id},${nameJ})"><i class="fas fa-sign-out-alt"></i> Ручной пропуск</button>
+                ${e.qr_code ? `<button class="btn-sm blue" onclick="showQrModal(${e.id},${nameJ})"><i class="fas fa-qrcode"></i> QR-код</button>` : ''}
+                <a class="btn-sm" href="https://www.severfoods.ru/print_qr.php?id=${e.id}" target="_blank" title="Печать QR"><i class="fas fa-print"></i> Печать</a>
+            </div>
+        </div>`;
+    openModal('empCardModal');
+}
+
+// ── Manual pass ───────────────────────────────────────────
+let _manualEmpId = null;
+
+function openManualModal(empId, empName) {
+    _manualEmpId = empId;
+    document.getElementById('manualEmpName').textContent = empName;
+    document.getElementById('manualResult').innerHTML = '';
+    openModal('manualModal');
+}
+
+async function doManualPass(mealType) {
+    if (!_manualEmpId) return;
+    const ptId   = currentUser?.selected_point_id || currentUser?.assigned_point_id || null;
+    const ptName = currentUser?.selected_point_name || 'Офлайн';
+
+    const res  = await fetch('/api/meal_logs', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            employee_id:     _manualEmpId,
+            meal_type:       mealType,
+            meal_point_id:   ptId,
+            meal_point_name: ptName,
+            operator_name:   currentUser?.full_name || 'Оператор',
+        }),
+    });
+    const data = await res.json();
+    const el   = document.getElementById('manualResult');
+
+    if (data.ok) {
+        el.innerHTML = `<div class="msg-ok" style="padding:8px 12px;border-radius:8px;font-size:13px;font-weight:600">✅ ${MEAL_LABELS[mealType]} зафиксирован</div>`;
+        setTimeout(() => closeModal('manualModal'), 1800);
+    } else if (data.error === 'duplicate') {
+        el.innerHTML = `<div class="msg-dup" style="padding:8px 12px;border-radius:8px;font-size:13px;font-weight:600">⚠️ Уже зафиксировано сегодня</div>`;
+    } else {
+        el.innerHTML = `<div class="msg-error" style="padding:8px 12px;border-radius:8px;font-size:13px;font-weight:600">❌ ${data.message || 'Ошибка'}</div>`;
+    }
+}
+
+// ── QR modal ──────────────────────────────────────────────
+function showQrModal(empId, empName) {
+    const emp = allEmployees.find(e => e.id === empId);
+    if (!emp?.qr_code) return;
+
+    document.getElementById('qrModalName').textContent = empName;
+    document.getElementById('qrModalCode').textContent = emp.qr_code;
+
+    const canvas = document.getElementById('qrCanvas');
+    if (typeof QRCode !== 'undefined') {
+        QRCode.toCanvas(canvas, emp.qr_code, { width: 240, margin: 2 }, () => {});
+    } else {
+        canvas.style.display = 'none';
+    }
+    openModal('qrModal');
+}
+
+// ── Modal helpers ─────────────────────────────────────────
+function openModal(id) {
+    document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
 }
 
 // ── Chat ──────────────────────────────────────────────────

@@ -1,0 +1,47 @@
+{
+  "name": "severfoods-offline",
+  "version": "1.0.0",
+  "description": "Electron offline app for severfoods.ru",
+  "main": "main.js",
+  "author": "severfoods.ru",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --x64",
+    "build:nsis": "electron-builder --win nsis"
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.4.3",
+    "express": "^4.18.3",
+    "jsqr": "^1.4.0",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "ru.severfoods.offline",
+    "productName": "SeverFoods Offline",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "public/assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowDirChange": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "SeverFoods Offline"
+    },
+    "files": [
+      "main.js",
+      "src/**/*",
+      "public/**/*",
+      "node_modules/**/*"
+    ]
+  }
+}

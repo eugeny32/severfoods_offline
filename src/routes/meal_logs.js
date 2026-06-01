@@ -4,11 +4,12 @@ const crypto = require('crypto');
 
 const VALID_TYPES = ['breakfast', 'lunch', 'dinner', 'night'];
 
-// GET /api/meal_logs?limit=200&offset=0
+// GET /api/meal_logs?limit=200&offset=0&point_id=N
 router.get('/', (req, res) => {
-    const limit  = Math.min(parseInt(req.query.limit  || '200'), 1000);
-    const offset = parseInt(req.query.offset || '0');
-    res.json({ ok: true, logs: db.getMealLogs(limit, offset) });
+    const limit   = Math.min(parseInt(req.query.limit   || '200'), 1000);
+    const offset  = parseInt(req.query.offset  || '0');
+    const pointId = req.query.point_id ? parseInt(req.query.point_id) : null;
+    res.json({ ok: true, logs: db.getMealLogs(limit, offset, pointId) });
 });
 
 // POST /api/meal_logs — register a meal scan

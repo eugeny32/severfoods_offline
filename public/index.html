@@ -8,144 +8,211 @@
 </head>
 <body>
 
-<aside class="sidebar">
-    <div class="logo">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="8" fill="#003366"/>
-            <text x="16" y="22" text-anchor="middle" fill="#fff" font-size="18" font-weight="bold" font-family="sans-serif">SF</text>
-        </svg>
-        <span>SeverFoods</span>
-    </div>
-
-    <nav class="nav">
-        <button class="nav-btn active" data-page="scanner">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="8" height="8" rx="1"/><rect x="14" y="2" width="8" height="8" rx="1"/><rect x="2" y="14" width="8" height="8" rx="1"/><rect x="14" y="14" width="4" height="4"/><rect x="20" y="14" width="2" height="2"/><rect x="14" y="20" width="2" height="2"/><rect x="18" y="18" width="4" height="4"/></svg>
-            Сканер
-        </button>
-        <button class="nav-btn" data-page="employees">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            Сотрудники
-        </button>
-        <button class="nav-btn" data-page="logs">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            Журнал
-        </button>
-        <button class="nav-btn" data-page="settings">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            Настройки
-        </button>
-    </nav>
-
-    <div class="sync-panel">
-        <div class="sync-status" id="syncStatus">
-            <span class="sync-dot" id="syncDot"></span>
-            <span id="syncLabel">Нет связи</span>
+<!-- ── Экран входа ── -->
+<div id="loginScreen" class="login-screen">
+    <div class="login-card">
+        <div class="login-logo">
+            <div class="login-logo-icon">SF</div>
+            <div>
+                <div class="login-brand">SeverFoods</div>
+                <div class="login-sub">Система питания — Офлайн</div>
+            </div>
         </div>
-        <button class="btn-sync" id="btnSync" onclick="syncNow()">Синхронизировать</button>
-        <div class="sync-time" id="syncTime"></div>
+        <div class="login-form">
+            <div class="login-field">
+                <label>Логин</label>
+                <input id="loginInput" type="text" placeholder="Введите логин" autocomplete="username">
+            </div>
+            <div class="login-field">
+                <label>Пароль</label>
+                <input id="passwordInput" type="password" placeholder="Введите пароль" autocomplete="current-password">
+            </div>
+            <div id="loginError" class="login-error" style="display:none"></div>
+            <button id="loginBtn" class="login-btn" onclick="doLogin()">Войти</button>
+        </div>
+        <div id="loginOfflineNote" class="login-offline-note" style="display:none">
+            ⚠️ Офлайн-режим: для первого входа необходимо подключение к серверу
+        </div>
     </div>
-</aside>
+</div>
 
-<main class="content">
+<!-- ── Основное приложение ── -->
+<div id="mainApp" class="main-app" style="display:none">
 
-    <!-- ── Сканер ── -->
-    <section class="page active" id="page-scanner">
-        <div class="page-header">
-            <h1>Сканер QR-пропусков</h1>
-            <div class="meal-type-picker">
-                <button class="mt-btn active" data-type="breakfast">Завтрак</button>
-                <button class="mt-btn" data-type="lunch">Обед</button>
-                <button class="mt-btn" data-type="dinner">Ужин</button>
-                <button class="mt-btn" data-type="night">Ночной</button>
+    <aside class="sidebar">
+        <div class="logo">
+            <div class="logo-icon">SF</div>
+            <div>
+                <div class="logo-brand">SeverFoods</div>
+                <div class="logo-sub">Offline</div>
             </div>
         </div>
 
-        <div class="scanner-area">
-            <div class="scanner-box" id="scannerBox">
-                <video id="scannerVideo" playsinline></video>
-                <canvas id="scannerCanvas" style="display:none"></canvas>
-                <div class="scanner-overlay">
-                    <div class="scan-frame"></div>
-                    <p class="scan-hint">Наведите камеру на QR-код</p>
+        <nav class="nav" id="mainNav">
+            <button class="nav-btn active" data-page="scanner" data-roles="all">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="8" height="8" rx="1"/><rect x="14" y="2" width="8" height="8" rx="1"/><rect x="2" y="14" width="8" height="8" rx="1"/><rect x="14" y="14" width="4" height="4"/><rect x="20" y="14" width="2" height="2"/><rect x="14" y="20" width="2" height="2"/><rect x="18" y="18" width="4" height="4"/></svg>
+                Сканер
+            </button>
+            <button class="nav-btn" data-page="employees" data-roles="admin,super_admin">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Сотрудники
+            </button>
+            <button class="nav-btn" data-page="chat" data-roles="operator,admin,super_admin">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Чат
+            </button>
+            <button class="nav-btn" data-page="logs" data-roles="operator,admin,super_admin">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                Журнал
+            </button>
+            <button class="nav-btn" data-page="settings" data-roles="all">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Настройки
+            </button>
+        </nav>
+
+        <div class="user-panel">
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">?</div>
+                <div>
+                    <div class="user-name" id="userName">—</div>
+                    <div class="user-role" id="userRole">—</div>
+                </div>
+            </div>
+            <button class="btn-logout" onclick="doLogout()" title="Выйти">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </button>
+        </div>
+
+        <div class="sync-panel">
+            <div class="sync-status">
+                <span class="sync-dot" id="syncDot"></span>
+                <span id="syncLabel">Нет связи</span>
+            </div>
+            <button class="btn-sync" id="btnSync" onclick="syncNow()">Синхронизировать</button>
+            <div class="sync-time" id="syncTime"></div>
+        </div>
+    </aside>
+
+    <main class="content">
+
+        <!-- ── Сканер ── -->
+        <section class="page active" id="page-scanner">
+            <div class="page-header">
+                <h1>Сканер QR-пропусков</h1>
+                <div class="meal-type-picker">
+                    <button class="mt-btn active" data-type="breakfast">Завтрак</button>
+                    <button class="mt-btn" data-type="lunch">Обед</button>
+                    <button class="mt-btn" data-type="dinner">Ужин</button>
+                    <button class="mt-btn" data-type="night">Ночной</button>
                 </div>
             </div>
 
-            <div class="scan-result" id="scanResult">
-                <div class="result-card" id="resultCard" style="display:none">
-                    <div class="result-icon" id="resultIcon"></div>
-                    <div class="result-info">
-                        <div class="result-name"  id="resultName"></div>
-                        <div class="result-org"   id="resultOrg"></div>
-                        <div class="result-pos"   id="resultPos"></div>
-                        <div class="result-msg"   id="resultMsg"></div>
+            <div class="scanner-area">
+                <div class="scanner-box" id="scannerBox">
+                    <video id="scannerVideo" playsinline></video>
+                    <canvas id="scannerCanvas" style="display:none"></canvas>
+                    <div class="scanner-overlay" id="scannerOverlay">
+                        <div class="scan-start-btn" id="scanStartBtn" onclick="startScanner()">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                            <span>Включить камеру</span>
+                        </div>
+                        <div class="scan-active-ui" id="scanActiveUi" style="display:none">
+                            <div class="scan-frame"></div>
+                            <p class="scan-hint" id="scanHint">Наведите камеру на QR-код</p>
+                            <button class="scan-stop-btn" onclick="stopScanner()">Выключить</button>
+                        </div>
                     </div>
                 </div>
-                <div class="result-idle" id="resultIdle">
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><rect x="2" y="2" width="8" height="8" rx="1"/><rect x="14" y="2" width="8" height="8" rx="1"/><rect x="2" y="14" width="8" height="8" rx="1"/></svg>
-                    <p>Ожидание сканирования</p>
+
+                <div class="scan-result">
+                    <div class="result-card" id="resultCard" style="display:none">
+                        <div class="result-icon" id="resultIcon"></div>
+                        <div class="result-info">
+                            <div class="result-name" id="resultName"></div>
+                            <div class="result-org"  id="resultOrg"></div>
+                            <div class="result-pos"  id="resultPos"></div>
+                            <div class="result-msg"  id="resultMsg"></div>
+                        </div>
+                    </div>
+                    <div class="result-idle" id="resultIdle">
+                        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><rect x="2" y="2" width="8" height="8" rx="1"/><rect x="14" y="2" width="8" height="8" rx="1"/><rect x="2" y="14" width="8" height="8" rx="1"/></svg>
+                        <p>Ожидание сканирования</p>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- ── Сотрудники ── -->
-    <section class="page" id="page-employees">
-        <div class="page-header">
-            <h1>Сотрудники</h1>
-            <input class="search-input" id="empSearch" placeholder="Поиск по имени, организации…" oninput="filterEmployees()">
-        </div>
-        <div class="emp-grid" id="empGrid"></div>
-    </section>
-
-    <!-- ── Журнал ── -->
-    <section class="page" id="page-logs">
-        <div class="page-header">
-            <h1>Журнал питания</h1>
-            <button class="btn-secondary" onclick="loadLogs()">Обновить</button>
-        </div>
-        <div class="table-wrap">
-            <table class="data-table" id="logsTable">
-                <thead>
-                    <tr>
-                        <th>Время</th>
-                        <th>Сотрудник</th>
-                        <th>Организация</th>
-                        <th>Тип питания</th>
-                        <th>Точка</th>
-                        <th>Статус</th>
-                    </tr>
-                </thead>
-                <tbody id="logsBody"></tbody>
-            </table>
-        </div>
-    </section>
-
-    <!-- ── Настройки ── -->
-    <section class="page" id="page-settings">
-        <div class="page-header"><h1>Настройки</h1></div>
-        <div class="settings-card">
-            <h3>Синхронизация</h3>
-            <div class="setting-row">
-                <label>Адрес сервера</label>
-                <input id="cfgServer" class="setting-input" value="https://severfoods.ru" readonly>
+        <!-- ── Сотрудники ── -->
+        <section class="page" id="page-employees">
+            <div class="page-header">
+                <h1>Сотрудники</h1>
+                <input class="search-input" id="empSearch" placeholder="Поиск…" oninput="filterEmployees()">
+                <span class="emp-total" id="empTotal"></span>
             </div>
-            <div class="setting-row">
-                <label>Токен синхронизации</label>
-                <input id="cfgToken" class="setting-input" type="password" placeholder="Введите OFFLINE_SYNC_TOKEN">
+            <div class="org-list" id="orgList"></div>
+        </section>
+
+        <!-- ── Чат ── -->
+        <section class="page" id="page-chat">
+            <div class="chat-frame-wrap">
+                <div id="chatOffline" class="chat-offline" style="display:none">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <p>Чат доступен только при подключении к интернету</p>
+                </div>
+                <webview id="chatView" src="about:blank" style="width:100%;height:100%;border:none;display:none"></webview>
             </div>
-            <button class="btn-primary" onclick="saveSettings()">Сохранить</button>
-        </div>
+        </section>
 
-        <div class="settings-card">
-            <h3>Информация</h3>
-            <div class="setting-row"><label>Версия</label><span id="appVersion">1.0.0</span></div>
-            <div class="setting-row"><label>Сотрудников в базе</label><span id="infoEmp">—</span></div>
-            <div class="setting-row"><label>Последняя синхронизация</label><span id="infoSync">—</span></div>
-        </div>
-    </section>
+        <!-- ── Журнал ── -->
+        <section class="page" id="page-logs">
+            <div class="page-header">
+                <h1>Журнал питания</h1>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <select id="logsMealFilter" class="filter-select" onchange="loadLogs()">
+                        <option value="">Все типы</option>
+                        <option value="breakfast">Завтрак</option>
+                        <option value="lunch">Обед</option>
+                        <option value="dinner">Ужин</option>
+                        <option value="night">Ночной</option>
+                    </select>
+                    <button class="btn-secondary" onclick="loadLogs()">Обновить</button>
+                </div>
+            </div>
+            <div class="logs-stats" id="logsStats"></div>
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead><tr>
+                        <th>Время</th><th>Сотрудник</th><th>Организация</th>
+                        <th>Тип</th><th>Точка</th><th>Статус</th>
+                    </tr></thead>
+                    <tbody id="logsBody"></tbody>
+                </table>
+            </div>
+        </section>
 
-</main>
+        <!-- ── Настройки ── -->
+        <section class="page" id="page-settings">
+            <div class="page-header"><h1>Настройки</h1></div>
+            <div id="settingsContent"></div>
+        </section>
 
+    </main>
+</div>
+
+<!-- jsQR: loaded from CDN when online, or use local copy if exists -->
+<script>
+(function(){
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+    s.onerror = function(){
+        var s2 = document.createElement('script');
+        s2.src = 'assets/jsqr.min.js';
+        document.head.appendChild(s2);
+    };
+    document.head.appendChild(s);
+})();
+</script>
 <script src="assets/app.js"></script>
 </body>
 </html>

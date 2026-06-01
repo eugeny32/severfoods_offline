@@ -182,32 +182,32 @@
                 </button>
             </div>
 
-            <!-- Scanner area: camera+stats left, scan log right -->
-            <div class="scanner-area">
-                <div class="scanner-left">
-                <!-- Today stats -->
-                <div class="stats-row" id="scannerStats">
-                    <div class="stat-tile">
-                        <div class="stat-icon-row"><i class="fas fa-cloud-sun"></i></div>
-                        <div class="stat-num" id="stat_breakfast">0</div>
-                        <div class="stat-lbl">Завтрак</div>
-                    </div>
-                    <div class="stat-tile">
-                        <div class="stat-icon-row"><i class="fas fa-sun"></i></div>
-                        <div class="stat-num" id="stat_lunch">0</div>
-                        <div class="stat-lbl">Обед</div>
-                    </div>
-                    <div class="stat-tile">
-                        <div class="stat-icon-row"><i class="fas fa-moon"></i></div>
-                        <div class="stat-num" id="stat_dinner">0</div>
-                        <div class="stat-lbl">Ужин</div>
-                    </div>
-                    <div class="stat-tile">
-                        <div class="stat-icon-row"><i class="fas fa-star"></i></div>
-                        <div class="stat-num" id="stat_night">0</div>
-                        <div class="stat-lbl">Ночное</div>
-                    </div>
+            <!-- Today stats (above camera+log) -->
+            <div class="stats-row" id="scannerStats">
+                <div class="stat-tile">
+                    <div class="stat-icon-row"><i class="fas fa-cloud-sun"></i></div>
+                    <div class="stat-num" id="stat_breakfast">0</div>
+                    <div class="stat-lbl">Завтрак</div>
                 </div>
+                <div class="stat-tile">
+                    <div class="stat-icon-row"><i class="fas fa-sun"></i></div>
+                    <div class="stat-num" id="stat_lunch">0</div>
+                    <div class="stat-lbl">Обед</div>
+                </div>
+                <div class="stat-tile">
+                    <div class="stat-icon-row"><i class="fas fa-moon"></i></div>
+                    <div class="stat-num" id="stat_dinner">0</div>
+                    <div class="stat-lbl">Ужин</div>
+                </div>
+                <div class="stat-tile">
+                    <div class="stat-icon-row"><i class="fas fa-star"></i></div>
+                    <div class="stat-num" id="stat_night">0</div>
+                    <div class="stat-lbl">Ночное</div>
+                </div>
+            </div>
+
+            <!-- Scanner area: camera left, scan log right — same row, same height -->
+            <div class="scanner-area">
                 <div class="scanner-box">
                     <video id="scannerVideo" playsinline></video>
                     <canvas id="scannerCanvas" style="display:none"></canvas>
@@ -223,9 +223,8 @@
                         </div>
                     </div>
                 </div>
-                </div><!-- /.scanner-left -->
 
-                <!-- Scan log: last result + history -->
+                <!-- Scan log: aligned to camera height -->
                 <div class="scan-log-panel">
                     <div class="result-card" id="resultCard" style="display:none">
                         <div class="result-icon" id="resultIcon"></div>

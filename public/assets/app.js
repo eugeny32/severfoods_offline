@@ -103,6 +103,19 @@ function initUsbQrInput() {
 const ROLE_LABELS = { operator:'Оператор', admin:'Администратор', super_admin:'Супер-администратор' };
 const ROLE_COLORS = { operator:'#c2410c', admin:'#9b1c1c', super_admin:'#166534' };
 
+// ── Sync log panel height to camera box ───────────────────
+function syncLogHeight() {
+    const box = document.querySelector('.scanner-box');
+    const log = document.querySelector('.scan-log-panel');
+    if (box && log) log.style.height = box.offsetHeight + 'px';
+}
+const _logResizeObs = new ResizeObserver(syncLogHeight);
+document.addEventListener('DOMContentLoaded', () => {
+    const box = document.querySelector('.scanner-box');
+    if (box) _logResizeObs.observe(box);
+    syncLogHeight();
+});
+
 // ── Init ──────────────────────────────────────────────────
 (async function boot() {
     await loadLoginPoints();

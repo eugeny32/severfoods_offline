@@ -233,14 +233,13 @@ body {
 
 /* Today stats row */
 .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px; }
-.scanner-left { display:flex; flex-direction:column; gap:0; min-width:0; }
 .stat-tile { background:#fff; border:1.5px solid var(--gray-200); border-radius:12px; padding:10px 8px; text-align:center; }
 .stat-icon-row { font-size:15px; color:#94a3b8; margin-bottom:3px; }
 .stat-num { font-size:24px; font-weight:800; color:#0f172a; line-height:1; }
 .stat-lbl { font-size:10px; color:#94a3b8; margin-top:3px; font-weight:500; }
 
-/* Scanner layout — left 55%, right 45% */
-.scanner-area { display:grid; grid-template-columns:55fr 45fr; gap:14px; flex:1; min-height:0; }
+/* Scanner layout: camera left, log right — same row height */
+.scanner-area { display:grid; grid-template-columns:55fr 45fr; gap:14px; align-items:start; }
 .scanner-box {
     position:relative; background:#1e293b; border-radius:14px; overflow:hidden;
     width:100%; aspect-ratio:4/3; transition:box-shadow .25s;
@@ -273,11 +272,10 @@ body {
 .scan-stop-btn { padding:5px 14px; border-radius:7px; background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.25); color:#fff; font-size:11px; cursor:pointer; font-family:'Onest',sans-serif; }
 .scan-stop-btn:hover { background:rgba(255,255,255,.22); }
 
-/* Scan log panel — fills the height of scanner-left */
+/* Scan log panel — height set by JS to match .scanner-box */
 .scan-log-panel {
     background:#fff; border-radius:14px; border:1.5px solid var(--gray-200);
     display:flex; flex-direction:column; overflow:hidden;
-    align-self:stretch; /* stretch to match left column height */
 }
 .result-card { display:flex; gap:12px; align-items:flex-start; padding:14px 16px; border-bottom:1px solid var(--gray-100); flex-shrink:0; }
 .result-icon { width:44px; height:44px; border-radius:10px; flex-shrink:0; font-size:22px; display:flex; align-items:center; justify-content:center; }

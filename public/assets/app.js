@@ -637,14 +637,13 @@ function openOrgModal(org) {
 function empTableRow(e) {
     const sc    = e.qr_status || 'active';
     const scMap = { active:'Активен', expired:'Истёк', blocked:'Заблок.' };
-    const nameJ = JSON.stringify(e.full_name).replace(/[<>&]/g, c => ({'<':'<','>':'>','&':'&'}[c]));
-    const idStr = e.id;
+    const id    = e.id;
 
-    let actions = `<button class="btn-sm green" title="Ручной пропуск" onclick="openManualModal(${idStr},${nameJ})"><i class="fas fa-sign-out-alt"></i></button>`;
+    let actions = `<button class="btn-sm green" title="Ручной пропуск" onclick="openManualModal(${id})"><i class="fas fa-sign-out-alt"></i></button>`;
     if (e.qr_code) {
-        actions += `<button class="btn-sm blue" title="QR-код" onclick="showQrModal(${idStr},${nameJ})"><i class="fas fa-qrcode"></i></button>`;
+        actions += `<button class="btn-sm blue" title="QR-код" onclick="showQrModal(${id})"><i class="fas fa-qrcode"></i></button>`;
     }
-    actions += `<button class="btn-sm" title="Подробнее" onclick="openEmpCard(${idStr})"><i class="fas fa-info-circle"></i></button>`;
+    actions += `<button class="btn-sm" title="Подробнее" onclick="openEmpCard(${id})"><i class="fas fa-info-circle"></i></button>`;
 
     return `<tr>
         <td><div class="emp-name">${esc(e.full_name)}</div>
@@ -665,8 +664,6 @@ function openEmpCard(empId) {
     const sc       = e.qr_status || 'active';
     const scClass  = { active:'#166534', expired:'#991b1b', blocked:'#854d0e' };
 
-    const nameJ = JSON.stringify(e.full_name).replace(/[<>&]/g, c => ({'<':'<','>':'>','&':'&'}[c]));
-
     document.getElementById('empCardBody').innerHTML = `
         <div class="emp-card-info">
             <div class="emp-card-top">
@@ -685,8 +682,8 @@ function openEmpCard(empId) {
                 <span class="val" style="color:${scClass[sc]||'#0f172a'}">${scMap[sc]||sc}
                 ${e.qr_expires_at ? `<span style="color:#94a3b8;font-weight:400"> · до ${esc(e.qr_expires_at)}</span>` : ''}</span></div>
             <div class="emp-card-actions">
-                <button class="btn-sm green" onclick="openManualModal(${e.id},${nameJ})"><i class="fas fa-sign-out-alt"></i> Ручной пропуск</button>
-                ${e.qr_code ? `<button class="btn-sm blue" onclick="showQrModal(${e.id},${nameJ})"><i class="fas fa-qrcode"></i> QR-код</button>` : ''}
+                <button class="btn-sm green" onclick="openManualModal(${e.id})"><i class="fas fa-sign-out-alt"></i> Ручной пропуск</button>
+                ${e.qr_code ? `<button class="btn-sm blue" onclick="showQrModal(${e.id})"><i class="fas fa-qrcode"></i> QR-код</button>` : ''}
                 <a class="btn-sm" href="https://www.severfoods.ru/print_qr.php?id=${e.id}" target="_blank" title="Печать QR"><i class="fas fa-print"></i> Печать</a>
             </div>
         </div>`;
@@ -696,9 +693,10 @@ function openEmpCard(empId) {
 // ── Manual pass ───────────────────────────────────────────
 let _manualEmpId = null;
 
-function openManualModal(empId, empName) {
+function openManualModal(empId) {
+    const emp = allEmployees.find(e => e.id === empId);
     _manualEmpId = empId;
-    document.getElementById('manualEmpName').textContent = empName;
+    document.getElementById('manualEmpName').textContent = emp?.full_name || '';
     document.getElementById('manualResult').innerHTML = '';
     openModal('manualModal');
 }
@@ -733,11 +731,11 @@ async function doManualPass(mealType) {
 }
 
 // ── QR modal ──────────────────────────────────────────────
-function showQrModal(empId, empName) {
+function showQrModal(empId) {
     const emp = allEmployees.find(e => e.id === empId);
     if (!emp?.qr_code) return;
 
-    document.getElementById('qrModalName').textContent = empName;
+    document.getElementById('qrModalName').textContent = emp.full_name;
     document.getElementById('qrModalCode').textContent = emp.qr_code;
 
     const canvas = document.getElementById('qrCanvas');

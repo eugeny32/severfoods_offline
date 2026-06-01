@@ -340,10 +340,11 @@ body {
 .emp-org  { font-size:11px; color:var(--gray-500); margin-top:1px; }
 .emp-actions { display:flex; gap:5px; align-items:center; }
 .btn-sm {
-    display:inline-flex; align-items:center; justify-content:center;
-    width:30px; height:30px; border-radius:7px; border:1.5px solid var(--gray-200);
-    background:#fff; color:var(--gray-500); font-size:12px; cursor:pointer;
-    transition:all .15s; text-decoration:none;
+    display:inline-flex; align-items:center; justify-content:center; gap:5px;
+    min-width:30px; height:30px; padding:0 8px; border-radius:7px; border:1.5px solid var(--gray-200);
+    background:#fff; color:var(--gray-500); font-size:12px; font-weight:600; cursor:pointer;
+    transition:all .15s; text-decoration:none; white-space:nowrap;
+    font-family:'Onest',sans-serif;
 }
 .btn-sm:hover  { background:var(--gray-100); border-color:#94a3b8; color:#0f172a; }
 .btn-sm.green  { border-color:#86efac; background:#f0fdf4; color:#166534; }

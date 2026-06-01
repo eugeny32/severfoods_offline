@@ -1224,17 +1224,23 @@ function updateSyncUI(status) {
     const dot   = document.getElementById('syncDot');
     const label = document.getElementById('syncLabel');
     const time  = document.getElementById('syncTime');
-    if (!dot) return;
-
-    dot.className = 'sync-dot';
-    if (status.inProgress)               { dot.classList.add('syncing'); label.textContent = 'Синхронизация…'; }
-    else if (status.online && status.lastSyncOk) { dot.classList.add('online');  label.textContent = 'Онлайн'; }
-    else if (!status.online)             { label.textContent = 'Нет связи'; }
-    else                                 { dot.classList.add('error'); label.textContent = 'Ошибка'; }
-
-    if (status.lastSync) {
-        time.textContent = new Date(status.lastSync).toLocaleString('ru-RU', { hour:'2-digit', minute:'2-digit' });
+    if (dot) {
+        dot.className = 'sync-dot';
+        if (status.inProgress)               { dot.classList.add('syncing'); if(label) label.textContent = 'Синхронизация…'; }
+        else if (status.online && status.lastSyncOk) { dot.classList.add('online');  if(label) label.textContent = 'Онлайн'; }
+        else if (!status.online)             { if(label) label.textContent = 'Нет связи'; }
+        else                                 { dot.classList.add('error'); if(label) label.textContent = 'Ошибка'; }
+        if (status.lastSync && time) {
+            time.textContent = new Date(status.lastSync).toLocaleString('ru-RU', { hour:'2-digit', minute:'2-digit' });
+        }
     }
+    // Also update settings panel if open
+    const setSync  = document.getElementById('setSync');
+    const setStatus = document.getElementById('setStatus');
+    if (setSync && status.lastSync)
+        setSync.textContent = new Date(status.lastSync).toLocaleString('ru-RU');
+    if (setStatus)
+        setStatus.textContent = status.online ? '🟢 Онлайн' : '⚫ Офлайн';
 }
 
 // ── Utility ───────────────────────────────────────────────

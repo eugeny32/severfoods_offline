@@ -227,6 +227,10 @@ body {
 .mt-btn { padding:6px 12px; border-radius:7px; border:1.5px solid var(--gray-200); background:#fff; color:var(--gray-500); font-size:12px; font-weight:600; font-family:'Onest',sans-serif; cursor:pointer; transition:all .13s; }
 .mt-btn.active { background:var(--blue-800); color:#fff; border-color:var(--blue-800); }
 
+.qr-usb-wrap { position:relative; margin-bottom:12px; }
+.qr-usb-wrap .qr-input { width:100%; box-sizing:border-box; padding-right:110px; }
+.qr-pill { position:absolute; top:50%; right:12px; transform:translateY(-50%); font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; background:#0f172a; color:#fff; pointer-events:none; }
+.qr-pill-idle { background:#f59e0b; color:#fff; }
 .scanner-area { display:grid; grid-template-columns:1fr 1fr; gap:16px; flex:1; min-height:0; }
 .scanner-box { position:relative; background:#1e293b; border-radius:14px; overflow:hidden; aspect-ratio:4/3; max-height:380px; }
 #scannerVideo { width:100%; height:100%; object-fit:cover; display:block; }

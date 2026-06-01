@@ -19,6 +19,87 @@ let loginCamInterval = null;
 let chatLoaded = false;
 
 const MEAL_LABELS = { breakfast:'Завтрак', lunch:'Обед', dinner:'Ужин', night:'Ночной' };
+
+// ── USB QR Scanner Input ───────────────────────────────────
+const RU_TO_EN = {
+    'й':'q','ц':'w','у':'e','к':'r','е':'t','н':'y','г':'u','ш':'i','щ':'o','з':'p',
+    'х':'[','ъ':']','ф':'a','ы':'s','в':'d','а':'f','п':'g','р':'h','о':'j','л':'k',
+    'д':'l','ж':';','э':"'",'я':'z','ч':'x','с':'c','м':'v','и':'b','т':'n','ь':'m',
+    'б':',','ю':'.',
+    'Й':'Q','Ц':'W','У':'E','К':'R','Е':'T','Н':'Y','Г':'U','Ш':'I','Щ':'O','З':'P',
+    'Х':'{','Ъ':'}','Ф':'A','Ы':'S','В':'D','А':'F','П':'G','Р':'H','О':'J','Л':'K',
+    'Д':'L','Ж':':','Э':'"','Я':'Z','Ч':'X','С':'C','М':'V','И':'B','Т':'N','Ь':'M',
+    'Б':'<','Ю':'>',
+};
+
+let _idleTimer = null;
+let _idleCountdown = null;
+const IDLE_MS = 5000;
+
+function initUsbQrInput() {
+    const input   = document.getElementById('qrUsbInput');
+    const pillLay = document.getElementById('qsfLayout');
+    const pillIdle= document.getElementById('qsfIdle');
+    const pillSec = document.getElementById('qsfIdleSec');
+    if (!input) return;
+
+    // RU→EN layout conversion on keydown
+    input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const val = input.value.trim();
+            if (val) { handleQrScan(val); input.value = ''; }
+            return;
+        }
+        const mapped = RU_TO_EN[e.key];
+        if (mapped) {
+            e.preventDefault();
+            const s = input.selectionStart, end = input.selectionEnd;
+            input.value = input.value.slice(0, s) + mapped + input.value.slice(end);
+            input.setSelectionRange(s+1, s+1);
+            pillLay.style.display = '';
+            setTimeout(() => { pillLay.style.display = 'none'; }, 1500);
+            input.dispatchEvent(new Event('input'));
+        }
+    });
+
+    // Paste: convert RU chars
+    input.addEventListener('paste', e => {
+        e.preventDefault();
+        const pasted = (e.clipboardData || window.clipboardData).getData('text');
+        const converted = pasted.split('').map(c => RU_TO_EN[c] || c).join('');
+        const s = input.selectionStart, end = input.selectionEnd;
+        input.value = input.value.slice(0, s) + converted + input.value.slice(end);
+        input.setSelectionRange(s + converted.length, s + converted.length);
+    });
+
+    // Idle watcher: auto-focus after IDLE_MS
+    function resetIdle() {
+        clearTimeout(_idleTimer);
+        clearInterval(_idleCountdown);
+        pillIdle.style.display = 'none';
+        _idleTimer = setTimeout(() => {
+            let sec = Math.ceil(IDLE_MS / 1000);
+            pillSec.textContent = sec;
+            pillIdle.style.display = '';
+            _idleCountdown = setInterval(() => {
+                sec--;
+                pillSec.textContent = sec;
+                if (sec <= 0) {
+                    clearInterval(_idleCountdown);
+                    pillIdle.style.display = 'none';
+                    input.focus();
+                }
+            }, 1000);
+        }, IDLE_MS);
+    }
+
+    ['click','keydown','mousemove','touchstart'].forEach(ev =>
+        document.addEventListener(ev, resetIdle, { passive: true })
+    );
+    resetIdle();
+    input.focus();
+}
 const ROLE_LABELS = { operator:'Оператор', admin:'Администратор', super_admin:'Супер-администратор' };
 const ROLE_COLORS = { operator:'#c2410c', admin:'#9b1c1c', super_admin:'#166534' };
 
@@ -197,6 +278,7 @@ function onLogin(emp) {
     loadEmployees();
     pollSyncStatus();
     setInterval(pollSyncStatus, 10000);
+    initUsbQrInput();
 }
 
 async function doLogout() {

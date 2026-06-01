@@ -172,6 +172,13 @@
                     <button class="mt-btn" data-type="night">Ночной</button>
                 </div>
             </div>
+            <div class="qr-usb-wrap">
+                <input type="text" id="qrUsbInput" class="qr-input scanner-active"
+                       autocomplete="off" autocorrect="off" spellcheck="false"
+                       placeholder="Отсканируйте QR-код USB-сканером или введите вручную">
+                <span class="qr-pill" id="qsfLayout" style="display:none">RU→EN</span>
+                <span class="qr-pill qr-pill-idle" id="qsfIdle" style="display:none">Фокус через <b id="qsfIdleSec">5</b>с</span>
+            </div>
             <div class="scanner-area">
                 <div class="scanner-box">
                     <video id="scannerVideo" playsinline></video>

@@ -241,7 +241,8 @@ body {
 .btn-manual-check:hover { background:#003380; }
 
 /* Today stats row */
-.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:12px; }
+.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px; }
+.scanner-left { display:flex; flex-direction:column; gap:0; min-width:0; }
 .stat-tile { background:#fff; border:1.5px solid var(--gray-200); border-radius:12px; padding:12px 10px; text-align:center; }
 .stat-icon-row { font-size:16px; color:#94a3b8; margin-bottom:4px; }
 .stat-num { font-size:26px; font-weight:800; color:#0f172a; line-height:1; }

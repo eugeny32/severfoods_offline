@@ -187,32 +187,32 @@
                 </button>
             </div>
 
-            <!-- Today stats -->
-            <div class="stats-row" id="scannerStats">
-                <div class="stat-tile">
-                    <div class="stat-icon-row"><i class="fas fa-cloud-sun"></i></div>
-                    <div class="stat-num" id="stat_breakfast">0</div>
-                    <div class="stat-lbl">Завтрак</div>
-                </div>
-                <div class="stat-tile">
-                    <div class="stat-icon-row"><i class="fas fa-sun"></i></div>
-                    <div class="stat-num" id="stat_lunch">0</div>
-                    <div class="stat-lbl">Обед</div>
-                </div>
-                <div class="stat-tile">
-                    <div class="stat-icon-row"><i class="fas fa-moon"></i></div>
-                    <div class="stat-num" id="stat_dinner">0</div>
-                    <div class="stat-lbl">Ужин</div>
-                </div>
-                <div class="stat-tile">
-                    <div class="stat-icon-row"><i class="fas fa-star"></i></div>
-                    <div class="stat-num" id="stat_night">0</div>
-                    <div class="stat-lbl">Ночное</div>
-                </div>
-            </div>
-
-            <!-- Scanner area: camera + scan log -->
+            <!-- Scanner area: camera+stats left, scan log right -->
             <div class="scanner-area">
+                <div class="scanner-left">
+                <!-- Today stats -->
+                <div class="stats-row" id="scannerStats">
+                    <div class="stat-tile">
+                        <div class="stat-icon-row"><i class="fas fa-cloud-sun"></i></div>
+                        <div class="stat-num" id="stat_breakfast">0</div>
+                        <div class="stat-lbl">Завтрак</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="stat-icon-row"><i class="fas fa-sun"></i></div>
+                        <div class="stat-num" id="stat_lunch">0</div>
+                        <div class="stat-lbl">Обед</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="stat-icon-row"><i class="fas fa-moon"></i></div>
+                        <div class="stat-num" id="stat_dinner">0</div>
+                        <div class="stat-lbl">Ужин</div>
+                    </div>
+                    <div class="stat-tile">
+                        <div class="stat-icon-row"><i class="fas fa-star"></i></div>
+                        <div class="stat-num" id="stat_night">0</div>
+                        <div class="stat-lbl">Ночное</div>
+                    </div>
+                </div>
                 <div class="scanner-box">
                     <video id="scannerVideo" playsinline></video>
                     <canvas id="scannerCanvas" style="display:none"></canvas>
@@ -228,6 +228,7 @@
                         </div>
                     </div>
                 </div>
+                </div><!-- /.scanner-left -->
 
                 <!-- Scan log: last result + history -->
                 <div class="scan-log-panel">
@@ -347,14 +348,8 @@
             </div>
             <div id="manualModalBody" style="padding:20px">
                 <div class="manual-emp-name" id="manualEmpName"></div>
-                <p style="font-size:13px;color:#64748b;margin:8px 0 18px">Выберите тип питания:</p>
-                <div class="manual-meal-btns">
-                    <button class="manual-btn" onclick="doManualPass('breakfast')"><span class="mt-dot breakfast"></span>Завтрак</button>
-                    <button class="manual-btn" onclick="doManualPass('lunch')"><span class="mt-dot lunch"></span>Обед</button>
-                    <button class="manual-btn" onclick="doManualPass('dinner')"><span class="mt-dot dinner"></span>Ужин</button>
-                    <button class="manual-btn" onclick="doManualPass('night')"><span class="mt-dot night"></span>Ночной</button>
-                </div>
-                <div id="manualResult" style="margin-top:16px"></div>
+                <div id="manualMealInfo" style="margin:10px 0 4px;font-size:13px;color:#64748b"></div>
+                <div id="manualResult" style="margin-top:12px"></div>
             </div>
         </div>
     </div>

@@ -332,6 +332,7 @@ function navigateTo(page) {
     document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === `page-${page}`));
 
     if (page !== 'scanner') stopScanner();
+    if (page === 'scanner')   { updateMealTypeAuto(); loadTodayStats(); }
     if (page === 'employees') loadEmployees();
     if (page === 'logs')      loadLogs();
     if (page === 'settings')  renderSettings();
@@ -512,7 +513,7 @@ function addToScanLog(emp, type) {
     const now = new Date();
     const time = now.toLocaleTimeString('ru', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
     scanLogEntries.unshift({ name: emp?.full_name || '—', type, time });
-    if (scanLogEntries.length > 100) scanLogEntries.pop();
+    if (scanLogEntries.length > 200) scanLogEntries.pop();
     renderScanLog();
 }
 
@@ -522,10 +523,8 @@ function renderScanLog() {
     const count  = document.getElementById('scanLogCount');
     if (!list) return;
     const ok = scanLogEntries.filter(e => e.type === 'ok').length;
-    if (scanLogEntries.length) {
-        header.style.display = '';
-        count.textContent = ok;
-    }
+    header.style.display = scanLogEntries.length ? '' : 'none';
+    if (count) count.textContent = ok;
     list.innerHTML = scanLogEntries.map(e => `
         <div class="scan-log-item">
             <span class="scan-log-dot ${e.type}"></span>
@@ -534,29 +533,46 @@ function renderScanLog() {
         </div>`).join('');
 }
 
-// ── Today stats ────────────────────────────────────────────
+// ── Today stats + scan log from DB ────────────────────────
 const _todayStats = { breakfast:0, lunch:0, dinner:0, night:0 };
 
-function updateScanStats(type, delta) {
-    if (type in _todayStats) _todayStats[type] += delta;
+function renderTodayStats() {
     for (const t of Object.keys(_todayStats)) {
         const el = document.getElementById(`stat_${t}`);
         if (el) el.textContent = _todayStats[t];
     }
 }
 
+function updateScanStats(type, delta) {
+    if (type && type in _todayStats) _todayStats[type] += delta;
+    renderTodayStats();
+}
+
 async function loadTodayStats() {
     try {
-        const today = new Date().toISOString().slice(0,10);
-        const res  = await fetch(`/api/meal_logs?limit=2000&since=${today}T00:00:00`);
-        const data = await res.json();
+        const today = new Date().toISOString().slice(0, 10);
+        const ptId  = currentUser?.selected_point_id || currentUser?.assigned_point_id || null;
+        const url   = ptId
+            ? `/api/meal_logs?limit=2000&since=${today}T00:00:00&point_id=${ptId}`
+            : `/api/meal_logs?limit=2000&since=${today}T00:00:00`;
+        const data  = await fetch(url).then(r => r.json());
+
         for (const k of Object.keys(_todayStats)) _todayStats[k] = 0;
-        const ptId = currentUser?.selected_point_id || currentUser?.assigned_point_id || null;
+        scanLogEntries = [];
+
         (data.logs || []).forEach(l => {
-            if (ptId && l.meal_point_id && l.meal_point_id !== ptId) return;
             if (l.meal_type in _todayStats) _todayStats[l.meal_type]++;
+            // Populate scan log from DB (access_granted only, today)
+            const time = l.scanned_at
+                ? new Date(l.scanned_at.replace(' ', 'T'))
+                    .toLocaleTimeString('ru', { hour:'2-digit', minute:'2-digit', second:'2-digit' })
+                : '—';
+            scanLogEntries.push({ name: l.employee_name || '—', type: 'ok', time });
         });
-        updateScanStats();
+
+        // DB returns DESC, keep that order (newest first)
+        renderTodayStats();
+        renderScanLog();
     } catch (_) {}
 }
 
@@ -696,9 +712,16 @@ let _manualEmpId = null;
 function openManualModal(empId) {
     const emp = allEmployees.find(e => e.id === empId);
     _manualEmpId = empId;
+    updateMealTypeAuto();
     document.getElementById('manualEmpName').textContent = emp?.full_name || '';
+    document.getElementById('manualMealInfo').innerHTML =
+        `<span style="font-size:15px">${MEAL_ICONS[currentMealType] || ''}</span>
+         <strong>${MEAL_LABELS[currentMealType]}</strong>
+         <span style="color:#94a3b8;font-size:12px"> — по расписанию</span>`;
     document.getElementById('manualResult').innerHTML = '';
+    // Auto-confirm after 400ms so modal flashes the type, then submits
     openModal('manualModal');
+    setTimeout(() => doManualPass(currentMealType), 500);
 }
 
 async function doManualPass(mealType) {
@@ -722,9 +745,13 @@ async function doManualPass(mealType) {
 
     if (data.ok) {
         el.innerHTML = `<div class="msg-ok" style="padding:8px 12px;border-radius:8px;font-size:13px;font-weight:600">✅ ${MEAL_LABELS[mealType]} зафиксирован</div>`;
-        setTimeout(() => closeModal('manualModal'), 1800);
+        updateScanStats(mealType, 1);
+        const emp = allEmployees.find(e => e.id === _manualEmpId);
+        addToScanLog(emp, 'ok');
+        setTimeout(() => closeModal('manualModal'), 1500);
     } else if (data.error === 'duplicate') {
         el.innerHTML = `<div class="msg-dup" style="padding:8px 12px;border-radius:8px;font-size:13px;font-weight:600">⚠️ Уже зафиксировано сегодня</div>`;
+        setTimeout(() => closeModal('manualModal'), 1800);
     } else {
         el.innerHTML = `<div class="msg-error" style="padding:8px 12px;border-radius:8px;font-size:13px;font-weight:600">❌ ${data.message || 'Ошибка'}</div>`;
     }

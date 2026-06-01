@@ -174,12 +174,17 @@
                     <span class="qr-pill" id="qsfLayout" style="display:none">RU→EN</span>
                     <span class="qr-pill qr-pill-idle" id="qsfIdle" style="display:none">Фокус через <b id="qsfIdleSec">5</b>с</span>
                 </div>
-                <input type="text" id="qrUsbInput" class="qr-input scanner-active"
-                       autocomplete="off" autocorrect="off" spellcheck="false"
-                       placeholder="Наведите сканер на QR-код…">
-                <button class="btn-manual-check" id="manualCheckBtn" style="display:none" onclick="doManualCheck()">
-                    <i class="fas fa-search"></i> Проверить вручную
-                </button>
+                <div class="qr-input-row">
+                    <input type="text" id="qrUsbInput" class="qr-input scanner-active"
+                           autocomplete="off" autocorrect="off" spellcheck="false"
+                           placeholder="Наведите сканер на QR-код…">
+                    <button class="btn-qr-action" id="manualCheckBtn" style="display:none" onclick="doManualCheck()">
+                        <i class="fas fa-search"></i> Проверить
+                    </button>
+                    <button class="btn-qr-action btn-qr-cam" onclick="openCamModal()">
+                        <i class="fas fa-camera"></i> Камера
+                    </button>
+                </div>
             </div>
 
             <!-- Today stats (above camera+log) -->

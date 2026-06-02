@@ -1,11 +1,12 @@
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
-/* ── Scrollbars ── */
-::-webkit-scrollbar { width:5px; height:5px; }
+/* ── Scrollbars (Claude-style: thin, transparent) ── */
+::-webkit-scrollbar { width:4px; height:4px; }
 ::-webkit-scrollbar-track { background:transparent; }
-::-webkit-scrollbar-thumb { background:rgba(148,163,184,.35); border-radius:10px; }
-::-webkit-scrollbar-thumb:hover { background:rgba(148,163,184,.65); }
+::-webkit-scrollbar-thumb { background:rgba(148,163,184,.18); border-radius:10px; }
+::-webkit-scrollbar-thumb:hover { background:rgba(148,163,184,.45); }
 ::-webkit-scrollbar-corner { background:transparent; }
+* { scrollbar-width:thin; scrollbar-color:rgba(148,163,184,.18) transparent; }
 
 /* ── Theme variables ── */
 :root {

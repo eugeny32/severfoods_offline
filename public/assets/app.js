@@ -874,6 +874,13 @@ function loadChat() {
     });
 }
 
+// Listen for navigation messages from chat webview (back button → scanner)
+window.addEventListener('message', e => {
+    if (e.data?.action === 'navigate' && e.data?.page) {
+        navigateTo(e.data.page);
+    }
+});
+
 // ── Logs ──────────────────────────────────────────────────
 async function loadLogs() {
     const mealFilter = document.getElementById('logsMealFilter')?.value || '';

@@ -28,8 +28,10 @@ function createWindow() {
         height: 720,
         minWidth:  900,
         minHeight: 600,
-        icon: path.join(__dirname, 'public/assets/img/favicon.ico'),
-        title: 'SeverFoods Offline',
+        icon: path.join(__dirname, 'public/assets/img/icon.ico'),
+        title: 'СеверФудс',
+        show: false,                        // hidden until ready-to-show
+        backgroundColor: '#17212b',         // prevents white flash
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
@@ -39,6 +41,8 @@ function createWindow() {
     });
 
     mainWindow.loadURL(`http://localhost:${PORT}/`);
+
+    mainWindow.once('ready-to-show', () => { mainWindow.show(); });
 
     mainWindow.on('close', (e) => {
         if (tray) { e.preventDefault(); mainWindow.hide(); }

@@ -1,20 +1,21 @@
 {
   "name": "severfoods-offline",
   "version": "1.0.0",
-  "description": "Electron offline app for severfoods.ru",
+  "description": "Система учёта питания — СеверФудс",
   "main": "main.js",
-  "author": "severfoods.ru",
+  "author": "Palchenkov E.I. / OOO Sever",
   "license": "MIT",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --win --x64",
-    "build:nsis": "electron-builder --win nsis"
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux"
   },
   "dependencies": {
-    "sql.js": "^1.12.0",
     "express": "^4.18.3",
     "jsqr": "^1.4.0",
-    "node-fetch": "^2.7.0"
+    "node-fetch": "^2.7.0",
+    "sql.js": "^1.12.0"
   },
   "devDependencies": {
     "electron": "^30.0.0",
@@ -22,26 +23,50 @@
   },
   "build": {
     "appId": "ru.severfoods.offline",
-    "productName": "SeverFoods Offline",
+    "productName": "SeverFoods",
+    "copyright": "2026 OOO Sever",
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/sql.js/dist/sql-wasm.wasm"
+    ],
     "directories": {
-      "output": "dist"
-    },
-    "win": {
-      "target": "nsis",
-      "icon": "public/assets/icon.ico"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowDirChange": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "SeverFoods Offline"
+      "output": "dist",
+      "buildResources": "build-res"
     },
     "files": [
       "main.js",
       "src/**/*",
       "public/**/*",
-      "node_modules/**/*"
-    ]
+      "node_modules/**/*",
+      "!node_modules/**/{CHANGELOG.md,README.md,readme.md,test,tests,__tests__,example,examples,coverage,.travis.yml,.eslintrc,.eslintignore,.gitignore,.github}",
+      "!node_modules/**/*.{ts,map,md}"
+    ],
+    "extraResources": [
+      {
+        "from": ".env.example",
+        "to": ".env.example"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "dir",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "public/assets/img/icon.ico",
+      "requestedExecutionLevel": "asInvoker",
+      "signAndEditExecutable": false
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "public/assets/img/icon.png",
+      "category": "public.app-category.business"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "public/assets/img/icon.png",
+      "category": "Office"
+    }
   }
 }

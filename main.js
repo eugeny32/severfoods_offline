@@ -1,13 +1,20 @@
 // Load .env before any other module reads process.env
 const fs   = require('fs');
 const path = require('path');
-const envPath = path.join(__dirname, '.env');
-if (fs.existsSync(envPath)) {
-    fs.readFileSync(envPath, 'utf8').split(/\r?\n/).forEach(line => {
+
+function loadEnv(dir) {
+    const p = path.join(dir, '.env');
+    if (!fs.existsSync(p)) return false;
+    fs.readFileSync(p, 'utf8').split(/\r?\n/).forEach(line => {
         const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*)\s*$/);
         if (m) process.env[m[1]] = m[2].trim();
     });
+    return true;
 }
+
+// In packaged app __dirname is inside asar; exe directory is the install root
+const exeDir = path.dirname(process.execPath);
+if (!loadEnv(exeDir)) loadEnv(__dirname);
 
 const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } = require('electron');
 const db     = require('./src/db');
